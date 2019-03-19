@@ -27,7 +27,7 @@ message TrackerMsg {
   /**
    * Id of the tracker attributed by the vive_provider
    */
-  required uint32 tracker_idx;
+  required uint32 tracker_idx = 1;
   /**
    * Time in microseconds since tracker was tracked successfully. If value is
    * greater than 0, this means that the value is interpolated from previously
