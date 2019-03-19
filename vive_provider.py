@@ -14,8 +14,6 @@ class Vive_provider:
         self.lastInfos = {}
         self.scanTrackers()
 
-
-
     def _check_devices(self):
         "Enumerate OpenVR tracked devices and check whether any need to be initialized"
         for i in range(1, len(self.poses)):
