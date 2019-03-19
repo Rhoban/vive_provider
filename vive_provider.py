@@ -8,58 +8,99 @@ from utils import *
 
 class Vive_provider:
     
-    def __init__(self, nbTrackers):
+    def __init__(self):
         self.vr = openvr.init(openvr.VRApplication_Other)
-        self.nbTrackers = nbTrackers
-        self.trackers = [1] # TODO initialize with scanForTrackers()
+        self.trackers = {}
+        self.lastInfos = {}
+        self.scanTrackers()
 
-    # TODO retrieve serial numbers of trackers, and associate with index
-    # Not very clear how it works at the moment
-    def scanForTrackers(self):
-        ids = [1]
 
-        # nothing is working in here yet
-        # aze = self.vr.getDeviceToAbsoluteTrackingPose(openvr.TrackingUniverseStanding, 0, openvr.k_unMaxTrackedDeviceCount)
+
+    def _check_devices(self):
+        "Enumerate OpenVR tracked devices and check whether any need to be initialized"
+        for i in range(1, len(self.poses)):
+            pose = self.poses[i]
+            if not pose.bDeviceIsConnected:
+                continue
+            if not pose.bPoseIsValid:
+                continue
+            if self.show_controllers_only:
+                device_class = openvr.VRSystem().getTrackedDeviceClass(i)
+                if not device_class == openvr.TrackedDeviceClass_Controller:
+                    continue
+            model_name = openvr.VRSystem().getStringTrackedDeviceProperty(i, openvr.Prop_RenderModelName_String)
+
+            if model_name not in self.meshes:
+                self.meshes[model_name] = TrackedDeviceMesh(model_name)
         
-        # for i in range(1, self.nbTrackers+10):
-        #     if(aze[i].bPoseIsValid and aze[i].bDeviceIsConnected and ):
-        #         print("coucou")
-            # print(aze[i].mDeviceToAbsoluteTracking)
-            # aaa = openvr.ETrackedDeviceProperty()
-            # aze = self.vr.getStringTrackedDeviceProperty(i, aaa)
+    def scanTrackers(self):
+        
+        poses = self.vr.getDeviceToAbsoluteTrackingPose(openvr.TrackingUniverseStanding, 0, openvr.k_unMaxTrackedDeviceCount)
+        
+        ids = {}
+        for i in range(1, openvr.k_unMaxTrackedDeviceCount):
+            pose = poses[i]
+            if not pose.bDeviceIsConnected:
+                continue
+            if not pose.bPoseIsValid:
+                continue
+            device_class = openvr.VRSystem().getTrackedDeviceClass(i)
+            if not device_class == openvr.TrackedDeviceClass_GenericTracker:
+                continue            
+            serial_number = openvr.VRSystem().getStringTrackedDeviceProperty(i, openvr.Prop_SerialNumber_String)
+            ids[str(i)] = serial_number
             
+        self.trackers = ids    
 
-            # vr::VRSystem()->GetStringTrackedDeviceProperty(deviceID, vr::Prop_SerialNumber_String, serialNumber, sizeof(serialNumber));
-
-        return ids
-
-    
     # Returns dictionary :
-    #   pose (quaternion [x, y, z, r_w, r_x, r_y, r_z])
-    #   velocity (3d vector)
-    #   angularVelocity (3d vector)
-    #   vive_timestamp
-    #   time_since_epoch
-    # Returns none if tracker is not visible or if trackerId is not in the list of ids
-    def getTrackerInfo(self, trackerId):
-        
-        if (trackerId not in self.trackers):
-            print("Error : Invalid trackerId") # TODO maybe raise an exception here ?
-            return None
+    #
+    # {
+    #    vive_timestamp   : <>,
+    #    time_since_epoch : <>,
+    #    tracker_1 {
+    #       pose                        : <>,
+    #       velocity                    : <>,
+    #       angularVelocity             : <>,
+    #       vive_timestamp_last_tracked : <>,
+    #       time_since_last_tracked     : <>
+    #    },
+    #    tracker_2 {
+    #       pose                        : <>,
+    #       velocity                    : <>,
+    #       angularVelocity             : <>,
+    #       vive_timestamp_last_tracked : <>,
+    #       time_since_last_tracked     : <>
+    #    },
+    # ...
+    # }    
+    def getTrackersInfos(self):
         
         pose = self.vr.getDeviceToAbsoluteTrackingPose(openvr.TrackingUniverseStanding, 0, openvr.k_unMaxTrackedDeviceCount)
-        
-        if(not pose[trackerId].bPoseIsValid):
-            return None
-
         ret = {}
-
-        ret['pose'] = convert_to_quaternion(pose[trackerId].mDeviceToAbsoluteTracking)
-        ret['velocity'] = [pose[trackerId].vVelocity[0], pose[trackerId].vVelocity[1], pose[trackerId].vVelocity[2]]
-        ret['angularVelocity'] = [pose[trackerId].vAngularVelocity[0], pose[trackerId].vAngularVelocity[1], pose[trackerId].vAngularVelocity[2]]
+        
         ret['vive_timestamp'] = time.perf_counter()
         ret['time_since_epoch'] = int(time.time()*1000000)
+        
+        for t in self.trackers:
+            id = int(t[0])
+            trackerDict = {}
+            trackerDict['pose'] = convert_to_quaternion(pose[id].mDeviceToAbsoluteTracking)
+            trackerDict['velocity'] = [pose[id].vVelocity[0], pose[id].vVelocity[1], pose[id].vVelocity[2]]
+            trackerDict['angularVelocity'] = [pose[id].vAngularVelocity[0], pose[id].vAngularVelocity[1], pose[id].vAngularVelocity[2]]
+            
+            if(pose[id].bPoseIsValid or not self.lastInfos): # if first iteration, lastInfos is empty
+                trackerDict['vive_timestamp_last_tracked'] = ret['vive_timestamp']
+                trackerDict['time_since_last_tracked'] = 0
+            else:
+                trackerDict['vive_timestamp_last_tracked'] = self.lastInfos["tracker_"+str(id)]['vive_timestamp_last_tracked']
+                trackerDict['time_since_last_tracked'] = ret['vive_timestamp'] - self.lastInfos["tracker_"+str(id)]['vive_timestamp_last_tracked']
+                
+            ret["tracker_"+str(id)] = trackerDict
+
+        self.lastInfos = ret.copy()
+            
         return ret
+
 
 
 

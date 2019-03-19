@@ -4,14 +4,13 @@ from OpenGL.GL import *
 from vive_provider import *
 import sys
 
-vp = Vive_provider(1)
-# vp.scanForTrackers()
+vp = Vive_provider()
 
 def main():
     glutInit(sys.argv)
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH)
     glutInitWindowSize(700,700)
-    glutCreateWindow(b"azeaze")
+    glutCreateWindow(b"Trackers visualizer")
 
     glClearColor(1.,1.,1.,1.)
     glShadeModel(GL_SMOOTH)
@@ -71,39 +70,43 @@ def displayAxis(xRot, yRot, zRot):
 
 
 def display():
-    
+
+
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
-    
     displayAxis(0, 0, 0)
-
-    glPushMatrix()
+    
+    trackersInfo = vp.getTrackersInfos()    
     color = [0.0,0.,1.,1.]
-
-    trackerInfo = vp.getTrackerInfo(1)
-    if(trackerInfo is not None):
-        pose = trackerInfo['pose']
+    
+    for t in vp.trackers:
+        tracker = trackersInfo["tracker_"+str(t)]
+        if(tracker['time_since_last_tracked'] == 0):
+            glPushMatrix()
+            pose = tracker['pose']
+            glTranslatef(pose[0]*2, pose[1]*2, pose[2]*2)
         
-        glTranslatef(pose[0], pose[1], pose[2])
+            qw = pose[3]
+            qx = pose[4]
+            qy = pose[5]
+            qz = pose[6]
         
-        qw = pose[3]
-        qx = pose[4]
-        qy = pose[5]
-        qz = pose[6]
+            angle = 2 * (math.acos(qw)*180)/math.pi
+            x = qx / (math.sqrt(1-qw*qw) + 0.000001)
+            y = qy / (math.sqrt(1-qw*qw) + 0.000001)
+            z = qz / (math.sqrt(1-qw*qw) + 0.000001)
+            
+            glRotatef(angle, x, y, z);
+            
+            glMaterialfv(GL_FRONT,GL_DIFFUSE,color)
+            glutSolidCube(0.5)
+            glPopMatrix()
+            glutSwapBuffers()
+            glutPostRedisplay()
+            
+        else:
+            print(tracker['time_since_last_tracked'])
+            print("tracker not visible")
         
-        angle = 2 * (math.acos(qw)*180)/math.pi
-        x = qx / math.sqrt(1-qw*qw) + 0.000001
-        y = qy / math.sqrt(1-qw*qw)
-        z = qz / math.sqrt(1-qw*qw)
-        
-        glRotatef(angle, x, y, z);
-    else:
-        print("tracker not visible")
-        
-    glMaterialfv(GL_FRONT,GL_DIFFUSE,color)
-    glutSolidCube(0.5)
-    glPopMatrix()
-    glutSwapBuffers()
-    glutPostRedisplay()
 
     
 main()
