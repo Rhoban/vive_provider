@@ -38,6 +38,8 @@ class Vive_provider:
     #   pose (quaternion [x, y, z, r_w, r_x, r_y, r_z])
     #   velocity (3d vector)
     #   angularVelocity (3d vector)
+    #   vive_timestamp
+    #   time_since_epoch
     # Returns none if tracker is not visible or if trackerId is not in the list of ids
     def getTrackerInfo(self, trackerId):
         
@@ -55,7 +57,8 @@ class Vive_provider:
         ret['pose'] = convert_to_quaternion(pose[trackerId].mDeviceToAbsoluteTracking)
         ret['velocity'] = [pose[trackerId].vVelocity[0], pose[trackerId].vVelocity[1], pose[trackerId].vVelocity[2]]
         ret['angularVelocity'] = [pose[trackerId].vAngularVelocity[0], pose[trackerId].vAngularVelocity[1], pose[trackerId].vAngularVelocity[2]]
-        
+        ret['vive_timestamp'] = time.perf_counter()
+        ret['time_since_epoch'] = int(time.time()*1000000)
         return ret
 
 
