@@ -5,3 +5,6 @@
 - vive_visualizer.py         : opengl visualization 
 - vive_field_calibration.py  : calibrate vive referential using multiple points from soccer field
 
+# Protobuf init
+
+Use `tmp_prepare_proto_python.sh`
