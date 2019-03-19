@@ -1,0 +1,66 @@
+syntax = "proto2";
+
+package vive_provider;
+
+/**
+ * Describe a position using meters
+ */
+message Vector3d {
+  required float x = 1;
+  required float y = 2;
+  required float z = 3;
+};
+
+message Quaternion {
+  required float qw = 1;
+  required float qx = 2;
+  required float qy = 3;
+  required float qz = 4;
+};
+
+/**
+ * Describe the information regarding a vive tracker. The referential in which
+ * information are provided can either be the vive referential (no calibration)
+ * or another referential (see vive_field_calibration.py)
+ */
+message TrackerMsg {
+  /**
+   * Id of the tracker attributed by the vive_provider
+   */
+  required uint32 tracker_idx;
+  /**
+   * Time in microseconds since tracker was tracked successfully. If value is
+   * greater than 0, this means that the value is interpolated from previously
+   * estimated state
+   */
+  optional uint64 time_since_tracked = 2;
+  
+  optional Vector3d pos = 3;
+  optional Quaternion orientation = 4;
+  optional Vector3d cartesian_velocity = 5;
+  // TODO: angular speed -> currently vector3d
+}
+
+message GlobalMsg {
+  /**
+   * TimeStamp in microseconds, zero value is arbitrary. If a synchronization
+   * with other timed-values has to be achieved, computing the offset is up to
+   * receivers of the message.
+   */
+  required uint64 vive_timestamp = 1;
+
+  /**
+   * The number of microseconds elapsed since epoch (UTC) according to the
+   * computer running the vive_provider
+   */
+  repeated uint64 time_since_epoch = 2;
+
+  /**
+   * All the trackers currently active
+   */
+  repeated TrackerMsg trackers = 3;
+}
+
+message GlobalCollection {
+  repeated GlobalMsg messages = 1;
+}
