@@ -47,13 +47,13 @@ message GlobalMsg {
    * with other timed-values has to be achieved, computing the offset is up to
    * receivers of the message.
    */
-  required uint64 vive_timestamp = 1;
+  optional uint64 vive_timestamp = 1;
 
   /**
    * The number of microseconds elapsed since epoch (UTC) according to the
    * computer running the vive_provider
    */
-  repeated uint64 time_since_epoch = 2;
+  optional uint64 time_since_epoch = 2;
 
   /**
    * All the trackers currently active
