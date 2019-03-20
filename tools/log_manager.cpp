@@ -2,6 +2,12 @@
  * A simple tool to handle logs received from trackers from the HTC Vive
  */
 
+#include <vive_provider/udp_message_manager.h>
+
+#include <tclap/CmdLine.h>
+
+using namespace vive_provider;
+
 int main(int argc, char ** argv) {
   TCLAP::CmdLine cmd("Handle logs received from trackers from the HTC Vive",
                      ' ', "1.0");
@@ -28,14 +34,27 @@ int main(int argc, char ** argv) {
   UDPMessageManager msg_manager(port_read, -1);
 
   if (input_path != "") {
+    std::cout << "loading messages" << std::endl;
     msg_manager.loadMessages(input_path);
+    std::cout << "Nb messages loaded: " << msg_manager.getMessages().size() << std::endl;
+  }
+
+  if (input_path == "" && port_read == -1) {
+    std::cerr << "No input_path nor port_read provided, cannot acquire data" << std::endl;
+    exit(EXIT_FAILURE);
   }
 
   if (port_read >= 0) {
-    // TODO: wait for ctrl-c to stop client and write data
-    sleep(5);
+    std::cout << "Reading messages: press q to save and quit" << std::endl;
+    char key = ' ';
+    while (key != 'q') {
+      std::cin >> key;
+    }
   }
+  std::cout << "Saving " << msg_manager.getMessages().size() << " messages" << std::endl;
+
+  msg_manager.saveMessages(output_path);
   
-  // TODO: write data (to '.bin' or '.csv')
+  // TODO: create a '.csv' option
   // TODO: optional, select a specific time_slot
 }

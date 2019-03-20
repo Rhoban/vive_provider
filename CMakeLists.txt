@@ -57,5 +57,10 @@ foreach (DIRECTORY ${SOURCES_DIRECTORIES})
     set (ALL_SOURCES ${ALL_SOURCES} ${PREFIXED_SOURCES})
 endforeach (DIRECTORY)
 
+set(LINKED_LIBRARIES ${PROTOBUF_LIBRARIES} ${catkin_LIBRARIES})
+
 add_library (${PROJECT_NAME} SHARED ${ALL_SOURCES} ${PROTO_SOURCES})
-target_link_libraries(${PROJECT_NAME} ${PROTOBUF_LIBRARIES} ${catkin_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} ${LINKED_LIBRARIES})
+
+add_executable(log_manager tools/log_manager.cpp)
+target_link_libraries(log_manager ${PROJECT_NAME} ${LINKED_LIBRARIES})

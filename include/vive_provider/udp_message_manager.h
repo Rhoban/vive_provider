@@ -21,7 +21,14 @@ int getDefaultPort();
  * Can also be used to store/load messages
  */
 class UDPMessageManager {
-public:
+public:  
+  /**
+   * Negative values for port_read and port_write implies that the message
+   * manager is not connected
+   */
+  UDPMessageManager(int port_read, int port_write);
+  ~UDPMessageManager();
+
   /**
    * Send a message through UDP broadcaster
    */
@@ -36,13 +43,8 @@ public:
 
   void saveMessages(const std::string & path) const;
   void loadMessages(const std::string & path);
-  
-  /**
-   * Negative values for port_read and port_write implies that the message
-   * manager is not connected
-   */
-  UDPMessageManager(int port_read, int port_write);
-  ~UDPMessageManager();
+
+  const std::map<uint64_t, GlobalMsg> & getMessages() const;
 
 private:
   int port_read;
