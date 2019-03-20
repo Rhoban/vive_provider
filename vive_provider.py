@@ -13,23 +13,6 @@ class Vive_provider:
         self.trackers = {}
         self.lastInfos = {}
         self.scanTrackers()
-
-    def _check_devices(self):
-        "Enumerate OpenVR tracked devices and check whether any need to be initialized"
-        for i in range(1, len(self.poses)):
-            pose = self.poses[i]
-            if not pose.bDeviceIsConnected:
-                continue
-            if not pose.bPoseIsValid:
-                continue
-            if self.show_controllers_only:
-                device_class = openvr.VRSystem().getTrackedDeviceClass(i)
-                if not device_class == openvr.TrackedDeviceClass_Controller:
-                    continue
-            model_name = openvr.VRSystem().getStringTrackedDeviceProperty(i, openvr.Prop_RenderModelName_String)
-
-            if model_name not in self.meshes:
-                self.meshes[model_name] = TrackedDeviceMesh(model_name)
         
     def scanTrackers(self):
         
@@ -76,7 +59,7 @@ class Vive_provider:
         pose = self.vr.getDeviceToAbsoluteTrackingPose(openvr.TrackingUniverseStanding, 0, openvr.k_unMaxTrackedDeviceCount)
         ret = {}
         
-        ret['vive_timestamp'] = time.perf_counter()
+        ret['vive_timestamp'] = int(time.perf_counter()*1000000)
         ret['time_since_epoch'] = int(time.time()*1000000)
         
         for t in self.trackers:
@@ -92,6 +75,8 @@ class Vive_provider:
             else:
                 trackerDict['vive_timestamp_last_tracked'] = self.lastInfos["tracker_"+str(id)]['vive_timestamp_last_tracked']
                 trackerDict['time_since_last_tracked'] = ret['vive_timestamp'] - self.lastInfos["tracker_"+str(id)]['vive_timestamp_last_tracked']
+
+            trackerDict['serialNumber'] = t[1]
                 
             ret["tracker_"+str(id)] = trackerDict
 

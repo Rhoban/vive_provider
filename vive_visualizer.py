@@ -97,13 +97,6 @@ def displayTracker(pose, color):
     glTranslatef(0, 0, thickness)
     gluDisk(quad, 0, radius, 20, 1)
 
-    
-    # aze = [[1, 0, 0, 0],
-    #        [0, 1, 0, 0],
-    #        [0, 0, 0.2, 0],
-    #        [0, 0, 0, 1]]
-    
-    # glMultMatrixd(aze)
     glMaterialfv(GL_FRONT,GL_DIFFUSE,[1, 1, 1, 1])
     cubeSize = 0.2
     glTranslatef(radius, 0 , -0.4)

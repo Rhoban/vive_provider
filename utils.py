@@ -1,4 +1,6 @@
 import math
+from vive_pb2 import *
+import time
 
 #Convert the standard 3x4 position/rotation matrix to a x,y,z location and the appropriate Euler angles (in degrees)
 def convert_to_euler(pose_mat):
@@ -22,3 +24,50 @@ def convert_to_quaternion(pose_mat):
     y = pose_mat[1][3]
     z = pose_mat[2][3]
     return [x,y,z,r_w,r_x,r_y,r_z]
+
+def trackersInfos_to_GlobalMsg(trackersInfos):
+    
+    pb_msg = GlobalMsg()
+
+    pb_msg.vive_timestamp = trackersInfos['vive_timestamp']
+    pb_msg.time_since_epoch = trackersInfos['time_since_epoch']
+
+    nbTrackers = len(trackersInfos) - 2
+
+    for i in range(0, nbTrackers):
+        tracker = trackersInfos["tracker_"+str(i+1)]
+        pb_msg.trackers.add()
+        pb_msg.trackers[i].tracker_idx = i+1
+        pb_msg.trackers[i].time_since_last_tracked = tracker['time_since_last_tracked']
+        pb_msg.trackers[i].pos.x = tracker['pose'][0]
+        pb_msg.trackers[i].pos.y = tracker['pose'][1]
+        pb_msg.trackers[i].pos.z = tracker['pose'][2]
+        pb_msg.trackers[i].orientation.qw = tracker['pose'][3]
+        pb_msg.trackers[i].orientation.qx = tracker['pose'][4]
+        pb_msg.trackers[i].orientation.qy = tracker['pose'][5]
+        pb_msg.trackers[i].orientation.qz = tracker['pose'][6]
+        pb_msg.trackers[i].cartesian_velocity.x = tracker['velocity'][0]
+        pb_msg.trackers[i].cartesian_velocity.y = tracker['velocity'][1]
+        pb_msg.trackers[i].cartesian_velocity.z = tracker['velocity'][2]
+        pb_msg.trackers[i].serial_number = tracker['serial_number']
+
+    return pb_msg
+
+    
+def get_dummy_trackerInfos():
+    dummy_trackerInfos = {}
+
+    dummy_trackerInfos['vive_timestamp'] = int(time.perf_counter()*1000000)
+    dummy_trackerInfos['time_since_epoch'] = int(time.time()*1000000)
+
+    for i in range(1, 3):
+        trackerDict = {}
+        trackerDict['pose'] = [1, 2, 3, 4, 5, 6, 7]
+        trackerDict['velocity'] = [1, 2, 3]
+        trackerDict['angularVelocity'] = [1, 2, 3]
+        trackerDict['vive_timestamp_last_tracked'] = time.perf_counter()
+        trackerDict['time_since_last_tracked'] = 0
+        trackerDict['serial_number'] = "SERIALNUMBER123"
+        dummy_trackerInfos["tracker_"+str(i)] = trackerDict
+
+    return dummy_trackerInfos
