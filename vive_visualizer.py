@@ -1,10 +1,24 @@
+#!/usr/bin/python3
+
 from OpenGL.GLUT import *
 from OpenGL.GLU import *
 from OpenGL.GL import *
 from vive_provider import *
 import sys
+import socket
+from vive_pb2 import *
+from utils import * 
 
-vp = Vive_provider()
+
+clientMode = False
+if (len(sys.argv)>1):
+    clientMode = True
+    client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
+    client.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+    client.bind(("", 37020))
+else:
+    vp = Vive_provider()
+    
 
 def main():
     glutInit(sys.argv)
@@ -111,15 +125,23 @@ def displayTracker(pose, color):
             
 
 def display():
-
-
+    
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
     displayAxis(0, 0, 0)
     
-    trackersInfo = vp.getTrackersInfos()    
+    if(clientMode):
+        pb_msg = GlobalMsg()
+        data, addr = client.recvfrom(1024)
+        trackersInfo = GlobalMsg_to_trackersInfos(data)
+    else:
+        trackersInfo = vp.getTrackersInfos()    
     
-    for t in vp.trackers:
-        tracker = trackersInfo["tracker_"+str(t)]
+    for t in range(0, 1):
+    # for t in vp.trackers:
+        if(clientMode):
+            tracker = trackersInfo["tracker_"+str(t)]
+        else:
+            tracker = trackersInfo["tracker_"+str(t+1)]
         if(tracker['time_since_last_tracked'] == 0):
             pose = tracker['pose']
             displayTracker(pose, [0.0,0.,1.,1.])            
