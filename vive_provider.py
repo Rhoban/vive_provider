@@ -59,7 +59,7 @@ class Vive_provider:
         pose = self.vr.getDeviceToAbsoluteTrackingPose(openvr.TrackingUniverseStanding, 0, openvr.k_unMaxTrackedDeviceCount)
         ret = {}
         
-        ret['vive_timestamp'] = time.perf_counter()
+        ret['vive_timestamp'] = int(time.perf_counter()*1000000)
         ret['time_since_epoch'] = int(time.time()*1000000)
         
         for t in self.trackers:
@@ -75,6 +75,8 @@ class Vive_provider:
             else:
                 trackerDict['vive_timestamp_last_tracked'] = self.lastInfos["tracker_"+str(id)]['vive_timestamp_last_tracked']
                 trackerDict['time_since_last_tracked'] = ret['vive_timestamp'] - self.lastInfos["tracker_"+str(id)]['vive_timestamp_last_tracked']
+
+            trackerDict['serialNumber'] = t[1]
                 
             ret["tracker_"+str(id)] = trackerDict
 
