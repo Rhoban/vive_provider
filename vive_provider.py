@@ -17,7 +17,6 @@ class Vive_provider:
     def scanTrackers(self):
         
         poses = self.vr.getDeviceToAbsoluteTrackingPose(openvr.TrackingUniverseStanding, 0, openvr.k_unMaxTrackedDeviceCount)
-        
         ids = {}
         for i in range(1, openvr.k_unMaxTrackedDeviceCount):
             pose = poses[i]
@@ -26,6 +25,9 @@ class Vive_provider:
             if not pose.bPoseIsValid:
                 continue
             device_class = openvr.VRSystem().getTrackedDeviceClass(i)
+            print(device_class)
+            # if(not device_class == openvr.TrackedDeviceClass_GenericTracker or not device_class == openvr.TrackedDeviceClass_Controller):
+            #     continue
             if not device_class == openvr.TrackedDeviceClass_GenericTracker:
                 continue            
             serial_number = openvr.VRSystem().getStringTrackedDeviceProperty(i, openvr.Prop_SerialNumber_String)
@@ -61,7 +63,7 @@ class Vive_provider:
         
         ret['vive_timestamp'] = int(time.perf_counter()*1000000)
         ret['time_since_epoch'] = int(time.time()*1000000)
-        
+
         for t in self.trackers:
             id = int(t[0])
             trackerDict = {}
@@ -76,7 +78,8 @@ class Vive_provider:
                 trackerDict['vive_timestamp_last_tracked'] = self.lastInfos["tracker_"+str(id)]['vive_timestamp_last_tracked']
                 trackerDict['time_since_last_tracked'] = ret['vive_timestamp'] - self.lastInfos["tracker_"+str(id)]['vive_timestamp_last_tracked']
 
-            trackerDict['serialNumber'] = t[1]
+            # trackerDict['serialNumber'] = t[1]
+            trackerDict['serial_number'] = "TODO"
                 
             ret["tracker_"+str(id)] = trackerDict
 
