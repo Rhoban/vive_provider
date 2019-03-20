@@ -15,28 +15,32 @@ int getDefaultPort(int team_id) {
   return 37020;
 }
 
-UDPMessageManager::UDPMessageManager(int port_read, int port_write){
+UDPMessageManager::UDPMessageManager(int port_read, int port_write)
+  : port_read(port_read), port_write(port_write)
+{
   continue_to_run = true;
-  port_read = port_read;
-  port_write = port_write;
   broadcaster.reset(new rhoban_utils::UDPBroadcast(port_read, port_write));
-  if(port_read != -1){
+  if(port_read >= 0){
     broadcaster->openRead();
     thread.reset(new std::thread([this](){this->run();})); 
   }
-  if(port_write != -1){
+  if(port_write >= 0){
     broadcaster->openWrite();
   }
 }
 
 UDPMessageManager::~UDPMessageManager(){
   continue_to_run = false;
-  if(port_read != -1){
+  if(port_read >= 0){
     thread->join();
   }
-  if(port_write != -1){
+  if(port_write >= 0){
     broadcaster->closeWrite();
   }
+}
+
+const std::map<uint64_t, GlobalMsg> & UDPMessageManager::getMessages() const {
+  return messages;
 }
 
 void UDPMessageManager::run(){
@@ -105,11 +109,9 @@ void UDPMessageManager::loadMessages(const std::string & path) {
     throw std::runtime_error(DEBUG_INFO + " failed to open file '" + path + "'");
   }
   collection.ParseFromIstream(&in);
-  mutex.lock();
   for (const auto & msg : collection.messages()) {
     pushMessage(msg);
   }
-  mutex.unlock();
 }
 
 }
