@@ -60,9 +60,10 @@ def main():
     
     return
 
-def displayAxis(xRot, yRot, zRot):
+def displayAxis(center):
     glPushMatrix()
     quad = gluNewQuadric()
+    glTranslatef(center[0], center[1], center[2])
     
     color = [1., 0., 0., 1.]
     glMaterialfv(GL_FRONT,GL_DIFFUSE,color)
@@ -127,7 +128,6 @@ def displayTracker(pose, color):
 def display():
     
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
-    displayAxis(0, 0, 0)
     
     if(clientMode):
         pb_msg = GlobalMsg()
@@ -135,7 +135,16 @@ def display():
         trackersInfo = GlobalMsg_to_trackersInfos(data)
     else:
         trackersInfo = vp.getTrackersInfos()    
+
+    center = vp.calib.get_center()
+    displayAxis(center)
     
+    glMatrixMode(GL_MODELVIEW)
+    gluLookAt(center[0], center[1], center[2],
+              0, 0, 0,
+              0, 1, 0)
+    glPushMatrix()
+        
     for t in range(0, 1):
     # for t in vp.trackers:
         if(clientMode):

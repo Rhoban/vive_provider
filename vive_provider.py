@@ -6,14 +6,64 @@ import math
 import sys
 import numpy as np
 from utils import *
+# translation
+# deux vecteurs (1, 0, 0) dans repere terrain, et le vecteur dans repere du vive
+# angle entre deux vecteurs normalisés
+#   acos(dot(v1, v2))
+# axe
+# cross
+
+
+class Calib:
+    def __init__(self, positions, halfField):
+        self.positions = positions
+        self.halfField = halfField
+        
+        # deducing last position from first three
+        self.positions['3'] = [self.positions[2][0], self.positions[0][1], self.positions[2][2]]
+        # self.get_corrected_position()
+        
+    def get_corrected_position(self):
+        center = [0, 0, 0]
+        
+        if self.halfField:
+            center[0] = self.positions[2][0] # center x
+        else:
+            center[0] = (max(self.positions[1][0], self.positions[2][0]) - max(self.positions[1][0], self.positions[2][0])) /2 ,  # center y
+                        
+        center[1] = (max(self.positions[0][1], self.positions[1][1]) - min(self.positions[0][1], self.positions[1][1]))/2  # center y
+        center[2] = self.positions[0][2]
+
+        print(center)
+
+    def get_center(self):
+        center = [0, 0, 0]
+        
+        if self.halfField:
+            center[0] = self.positions[2][0] # center x
+        else:
+            center[0] = (max(self.positions[1][0], self.positions[2][0]) - max(self.positions[1][0], self.positions[2][0])) /2  # center x
+                        
+        center[1] = (max(self.positions[0][1], self.positions[1][1]) - min(self.positions[0][1], self.positions[1][1]))/2  # center y
+        center[2] = self.positions[0][2]
+
+        return center
+            
+        
 
 class Vive_provider:
     
-    def __init__(self):
+    def __init__(self, calibFile="calibFile.txt"):
         self.vr = openvr.init(openvr.VRApplication_Other)
         self.trackers = {}
         self.lastInfos = {}
+        
+        with open("calibFile.txt", "r") as c:
+            cc = eval(c.read())
+            self.calib = Calib(cc["positions"], cc["halfField"])
+            
         self.scanTrackers()
+        
         
     def scanTrackers(self):
         
