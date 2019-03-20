@@ -21,6 +21,7 @@ while True:
 
     pb_msg.Clear()
     pb_msg = trackersInfos_to_GlobalMsg(vp.getTrackersInfos())
+    # pb_msg = trackersInfos_to_GlobalMsg(get_dummy_trackerInfos())
     
     # temporary, converting to bytes
     trackersInfos = pb_msg.SerializeToString()

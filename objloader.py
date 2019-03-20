@@ -8,110 +8,139 @@
 
 import pygame
 from OpenGL.GL import *
+import os
 
 
-def MTL(filename):
-    contents = {}
-    mtl = None
-    for line in open(filename, "r"):
-        if line.startswith('#'):
-            continue
-        values = line.split()
-        if not values:
-            continue
-        if values[0] == 'newmtl':
-            mtl = contents[values[1]] = {}
-        elif mtl is None:
-            raise ValueError("mtl file doesn't start with newmtl stmt")
-        elif values[0] == 'map_Kd':
-            # load the texture referred to by this declaration
-            mtl[values[0]] = values[1]
-            surf = pygame.image.load(mtl['map_Kd'])
-            image = pygame.image.tostring(surf, 'RGBA', 1)
-            ix, iy = surf.get_rect().size
-            texid = mtl['texture_Kd'] = glGenTextures(1)
-            glBindTexture(GL_TEXTURE_2D, texid)
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
-                            GL_LINEAR)
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,
-                            GL_LINEAR)
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, ix, iy, 0, GL_RGBA,
-                         GL_UNSIGNED_BYTE, image)
-        else:
-            mtl[values[0]] = map(float, values[1:])
-    return contents
+def load_texture(filename):
+    """ This fuctions will return the id for the texture"""
+    textureSurface = pygame.image.load(filename)
+    textureData = pygame.image.tostring(textureSurface, "RGBA", 1)
+    width = textureSurface.get_width()
+    height = textureSurface.get_height()
+    ID = glGenTextures(1)
+    glBindTexture(GL_TEXTURE_2D, ID)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height,
+                 0, GL_RGBA, GL_UNSIGNED_BYTE, textureData)
+    return ID
 
 
-class OBJ:
-    def __init__(self, filename, swapyz=False):
-        """Loads a Wavefront OBJ file. """
+class ObjLoader(object):
+    def __init__(self, filename):
         self.vertices = []
+        self.triangle_faces = []
+        self.quad_faces = []
+        self.polygon_faces = []
         self.normals = []
-        self.texcoords = []
-        self.faces = []
+        #-----------------------
+        try:
+            f = open(filename)
+            n = 1
+            for line in f:
+                if line[:2] == "v ":
+                    index1 = line.find(" ") + 1  # first number index;
+                    index2 = line.find(" ", index1+1)  # second number index;
+                    index3 = line.find(" ", index2+1)  # third number index;
 
-        material = None
-        for line in open(filename, "r"):
-            if line.startswith('#'):
-                continue
-            values = line.split()
-            if not values:
-                continue
-            if values[0] == 'v':
-                v = map(float, values[1:4])
-                if swapyz:
-                    v = v[0], v[2], v[1]
-                self.vertices.append(v)
-            elif values[0] == 'vn':
-                v = map(float, values[1:4])
-                if swapyz:
-                    v = v[0], v[2], v[1]
-                self.normals.append(v)
-            elif values[0] == 'vt':
-                self.texcoords.append(map(float, values[1:3]))
-            elif values[0] in ('usemtl', 'usemat'):
-                material = values[1]
-            elif values[0] == 'mtllib':
-                self.mtl = MTL(values[1])
-            elif values[0] == 'f':
-                face = []
-                texcoords = []
-                norms = []
-                for v in values[1:]:
-                    w = v.split('/')
-                    face.append(int(w[0]))
-                    if len(w) >= 2 and len(w[1]) > 0:
-                        texcoords.append(int(w[1]))
+                    vertex = (float(line[index1:index2]), float(
+                        line[index2:index3]), float(line[index3:-1]))
+                    vertex = (round(vertex[0], 2), round(
+                        vertex[1], 2), round(vertex[2], 2))
+                    self.vertices.append(vertex)
+
+                elif line[:2] == "vn":
+                    index1 = line.find(" ") + 1  # first number index;
+                    index2 = line.find(" ", index1+1)  # second number index;
+                    index3 = line.find(" ", index2+1)  # third number index;
+
+                    normal = (float(line[index1:index2]), float(
+                        line[index2:index3]), float(line[index3:-1]))
+                    normal = (round(normal[0], 2), round(
+                        normal[1], 2), round(normal[2], 2))
+                    self.normals.append(normal)
+
+                elif line[0] == "f":
+                    string = line.replace("//", "/")
+                    #---------------------------------------------------
+                    i = string.find(" ")+1
+                    face = []
+                    for item in range(string.count(" ")):
+                        if string.find(" ", i) == -1:
+                            face.append(string[i:-1])
+                            break
+                        face.append(string[i:string.find(" ", i)])
+                        i = string.find(" ", i) + 1
+                    #---------------------------------------------------
+                    if string.count("/") == 3:
+                        self.triangle_faces.append(tuple(face))
+                    elif string.count("/") == 4:
+                        self.quad_faces.append(tuple(face))
                     else:
-                        texcoords.append(0)
-                    if len(w) >= 3 and len(w[2]) > 0:
-                        norms.append(int(w[2]))
-                    else:
-                        norms.append(0)
-                self.faces.append((face, norms, texcoords, material))
+                        self.polygon_faces.append(tuple(face))
+            f.close()
+        except IOError:
+            print("Could not open the .obj file...")
 
-        self.gl_list = glGenLists(1)
-        glNewList(self.gl_list, GL_COMPILE)
-        glEnable(GL_TEXTURE_2D)
-        glFrontFace(GL_CCW)
-        for face in self.faces:
-            vertices, normals, texture_coords, material = face
-
-            mtl = self.mtl[material]
-            if 'texture_Kd' in mtl:
-                # use diffuse texmap
-                glBindTexture(GL_TEXTURE_2D, mtl['texture_Kd'])
-            else:
-                # just use diffuse colour
-                glColor(*mtl['Kd'])
-
-            glBegin(GL_POLYGON)
-            for i in range(len(vertices)):
-                if normals[i] > 0:
-                    glNormal3fv(self.normals[normals[i] - 1])
-                if texture_coords[i] > 0:
-                    glTexCoord2fv(self.texcoords[texture_coords[i] - 1])
-                glVertex3fv(self.vertices[vertices[i] - 1])
+    def render_scene(self):
+        if len(self.triangle_faces) > 0:
+            #-------------------------------
+            glBegin(GL_TRIANGLES)
+            for face in (self.triangle_faces):
+                n = face[0]
+                normal = self.normals[int(n[n.find("/")+1:])-1]
+                glNormal3fv(normal)
+                for f in (face):
+                    glVertex3fv(self.vertices[int(f[:f.find("/")])-1])
             glEnd()
+            #---------------------------------
+
+        if len(self.quad_faces) > 0:
+            #----------------------------------
+            glBegin(GL_QUADS)
+            for face in (self.quad_faces):
+                n = face[0]
+                normal = self.normals[int(n[n.find("/")+1:])-1]
+                glNormal3fv(normal)
+                for f in (face):
+                    glVertex3fv(self.vertices[int(f[:f.find("/")])-1])
+            glEnd()
+            #-----------------------------------
+
+        if len(self.polygon_faces) > 0:
+            #----------------------------------
+            for face in (self.polygon_faces):
+                #---------------------
+                glBegin(GL_POLYGON)
+                n = face[0]
+                ns = n.split('/')
+                # print(ns)
+
+                normal = self.normals[int(ns[2])-1]
+                # normal = self.normals[int(n[n.find("/")+1:])-1]
+                glNormal3fv(normal)
+                for f in (face):
+                    # fs = f.split('/')
+                    # print(f)
+                    if f != '':
+                        glVertex3fv(self.vertices[int(f[:f.find("/")])-1])
+                    # glVertex3fv(self.vertices[int(fs[0])])
+                glEnd()
+                #----------------------
+            #-----------------------------------
+
+    def render_texture(self, textureID, texcoord):
+        glEnable(GL_TEXTURE_2D)
+        glBindTexture(GL_TEXTURE_2D, textureID)
+
+        glBegin(GL_QUADS)
+        for face in self.quad_faces:
+            n = face[0]
+            normal = self.normals[int(n[n.find("/")+1:])-1]
+            glNormal3fv(normal)
+            for i, f in enumerate(face):
+                glTexCoord2fv(texcoord[i])
+                glVertex3fv(self.vertices[int(f[:f.find("/")])-1])
+        glEnd()
+
         glDisable(GL_TEXTURE_2D)
-        glEndList()

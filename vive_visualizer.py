@@ -1,13 +1,29 @@
+#!/usr/bin/python3
+
 from OpenGL.GLUT import *
 from OpenGL.GLU import *
 from OpenGL.GL import *
 from vive_provider import *
 import sys
+import socket
+from vive_pb2 import *
+from utils import *
+
 from objloader import *
 
 
-vp = Vive_provider()
-obj = OBJ('assets/HTC_Vive_Tracker.obj')
+texture = load_texture('assets/black.png')
+obj = ObjLoader('assets/HTC_Vive_Tracker.obj')
+
+
+clientMode = False
+if (len(sys.argv) > 1):
+    clientMode = True
+    client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # UDP
+    client.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+    client.bind(("", 37020))
+else:
+    vp = Vive_provider()
 
 
 def main():
@@ -89,8 +105,9 @@ def displayTracker(pose, color):
     z = qz / (math.sqrt(1-qw*qw) + 0.000001)
 
     glRotatef(angle, x, y, z)
-
-    glCallList(obj.gl_list)
+    glScale(0.01, 0.01, 0.01)
+    obj.render_scene()
+    # glCallList(obj.gl_list)
 
     # glMaterialfv(GL_FRONT, GL_DIFFUSE, color)
 
@@ -120,10 +137,20 @@ def display():
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
     displayAxis(0, 0, 0)
 
-    trackersInfo = vp.getTrackersInfos()
+    if(clientMode):
+        pb_msg = GlobalMsg()
+        data, addr = client.recvfrom(1024)
+        trackersInfo = GlobalMsg_to_trackersInfos(data)
+    else:
+        trackersInfo = vp.getTrackersInfos()
+        # trackersInfo = vp.get_dummy_trackersInfos()
 
-    for t in vp.trackers:
-        tracker = trackersInfo["tracker_"+str(t)]
+    for t in range(0, 1):
+        # for t in vp.trackers:
+        if(clientMode):
+            tracker = trackersInfo["tracker_"+str(t)]
+        else:
+            tracker = trackersInfo["tracker_"+str(t+1)]
         if(tracker['time_since_last_tracked'] == 0):
             pose = tracker['pose']
             displayTracker(pose, [0.0, 0., 1., 1.])

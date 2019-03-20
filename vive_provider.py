@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 import sys
 import time
 import openvr
@@ -25,7 +26,6 @@ class Vive_provider:
             if not pose.bPoseIsValid:
                 continue
             device_class = openvr.VRSystem().getTrackedDeviceClass(i)
-            print(device_class)
             # if(not device_class == openvr.TrackedDeviceClass_GenericTracker or not device_class == openvr.TrackedDeviceClass_Controller):
             #     continue
             if not device_class == openvr.TrackedDeviceClass_GenericTracker:
