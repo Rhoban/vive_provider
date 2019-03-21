@@ -34,11 +34,8 @@ positions = {}
 displayFieldPositions(halfField)
 
 for i in range(0, 3):
-
-    input('Place tracker on position 0, then press enter: ')
-    trackersInfos = vp.getTrackersInfos()
-    tracker = trackersInfos["tracker_1"]
-    pose = tracker['pose']
+    input('Place tracker on position '+str(i)+', then press enter: ')
+    pose = vp.getTrackersInfos(raw=True)
     print(pose[0], pose[1], pose[2])
     positions[i] = [pose[0], pose[1], pose[2]]
 

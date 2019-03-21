@@ -105,7 +105,7 @@ class Vive_provider:
     #    },
     # ...
     # }    
-    def getTrackersInfos(self):
+    def getTrackersInfos(self, raw=False):
         
         pose = self.vr.getDeviceToAbsoluteTrackingPose(openvr.TrackingUniverseStanding, 0, openvr.k_unMaxTrackedDeviceCount)
         ret = {}
@@ -118,6 +118,8 @@ class Vive_provider:
             trackerDict = {}
 
             ppose = convert_to_quaternion(pose[id].mDeviceToAbsoluteTracking)
+            if raw:
+                return ppose
 
             p = pose[id].mDeviceToAbsoluteTracking
             
