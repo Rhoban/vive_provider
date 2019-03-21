@@ -129,12 +129,23 @@ def display():
 
     
     # for t in range(0, len(vp.trackers)):
+
+    for t in vp.trackers:
+        tracker = trackersInfo["tracker_"+str(int(t))]
     
-    for t in range(1, nbTrackers+1):
-        if(clientMode):
-            tracker = trackersInfo["tracker_"+str(int(t)-1)]
-        else:
-            tracker = trackersInfo["tracker_"+str(int(t))]
+    # for t in range(1, nbTrackers+1):
+    #     if(clientMode):
+    #         if "tracker_"+str(int(t)-1) in trackersInfo:
+    #             tracker = trackersInfo["tracker_"+str(int(t)-1)]
+    #         else:
+    #             continue
+    #     else:
+    #         if "tracker_"+str(int(t)) in trackersInfo:
+    #             tracker = trackersInfo["tracker_"+str(int(t))]
+    #         else:
+    #             print("coucou")
+    #             continue
+            
         if(tracker['time_since_last_tracked'] == 0):
             pose = tracker['pose_matrix']
             ppose = tracker['pose']

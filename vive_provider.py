@@ -70,13 +70,18 @@ class Vive_provider:
             if not pose.bPoseIsValid:
                 continue
             device_class = openvr.VRSystem().getTrackedDeviceClass(i)
-            # if(not device_class == openvr.TrackedDeviceClass_GenericTracker or not device_class == openvr.TrackedDeviceClass_Controller):
-            #     continue
-            if not device_class == openvr.TrackedDeviceClass_GenericTracker:
-                continue            
-            serial_number = openvr.VRSystem().getStringTrackedDeviceProperty(i, openvr.Prop_SerialNumber_String)
-            ids[str(i)] = serial_number
-            
+
+            if(device_class == openvr.TrackedDeviceClass_GenericTracker or device_class == openvr.TrackedDeviceClass_Controller):
+                serial_number = openvr.VRSystem().getStringTrackedDeviceProperty(i, openvr.Prop_SerialNumber_String)
+
+                ids[str(i)] = {}
+                ids[str(i)]["serial_number"] = serial_number
+                if device_class == openvr.TrackedDeviceClass_Controller: 
+                    ids[str(i)]["device_type"] = "controler"        
+                else:
+                    ids[str(i)]["device_type"] = "tracker"
+                
+        print(ids)
         self.trackers = ids    
 
     # Returns dictionary :
@@ -142,6 +147,12 @@ class Vive_provider:
 
             # trackerDict['serialNumber'] = t[1]
             trackerDict['serial_number'] = "TODO"
+            trackerDict['device_type'] = self.trackers[str(t)]['device_type']
+            # trackerDict['button_state'] = self.trackers[str(t)]['device_type']
+
+            # print(self.vr.getControllerState(t))
+# self.vr.getDeviceToAbsoluteTrackingPose(openvr.TrackingUniverseStanding, 0, openvr.k_unMaxTrackedDeviceCount)z
+            
                 
             ret["tracker_"+str(id)] = trackerDict
 
