@@ -53,6 +53,24 @@ def trackersInfos_to_GlobalMsg(trackersInfos):
         pb_msg.trackers[i].cartesian_velocity.z = tracker['velocity'][2]
         pb_msg.trackers[i].serial_number = tracker['serial_number']
 
+        pose_matrix = np.array(tracker['pose_matrix'])
+        pb_msg.trackers[i].pose_matrix.i0j0 = pose_matrix[0][0]
+        pb_msg.trackers[i].pose_matrix.i0j1 = pose_matrix[0][1]
+        pb_msg.trackers[i].pose_matrix.i0j2 = pose_matrix[0][2]
+        pb_msg.trackers[i].pose_matrix.i0j3 = pose_matrix[0][3]
+        pb_msg.trackers[i].pose_matrix.i1j0 = pose_matrix[1][0]
+        pb_msg.trackers[i].pose_matrix.i1j1 = pose_matrix[1][1]
+        pb_msg.trackers[i].pose_matrix.i1j2 = pose_matrix[1][2]
+        pb_msg.trackers[i].pose_matrix.i1j3 = pose_matrix[1][3]
+        pb_msg.trackers[i].pose_matrix.i2j0 = pose_matrix[2][0]
+        pb_msg.trackers[i].pose_matrix.i2j1 = pose_matrix[2][1]
+        pb_msg.trackers[i].pose_matrix.i2j2 = pose_matrix[2][2]
+        pb_msg.trackers[i].pose_matrix.i2j3 = pose_matrix[2][3]
+        pb_msg.trackers[i].pose_matrix.i3j0 = pose_matrix[3][0]
+        pb_msg.trackers[i].pose_matrix.i3j1 = pose_matrix[3][1]
+        pb_msg.trackers[i].pose_matrix.i3j2 = pose_matrix[3][2]
+        pb_msg.trackers[i].pose_matrix.i3j3 = pose_matrix[3][3]
+
     return pb_msg
 
 def GlobalMsg_to_trackersInfos(data):
@@ -72,13 +90,36 @@ def GlobalMsg_to_trackersInfos(data):
         trackerDict['velocity'] = [pb_msg.trackers[i].cartesian_velocity.x, pb_msg.trackers[i].cartesian_velocity.y, pb_msg.trackers[i].cartesian_velocity.z]
         trackerDict['angularVelocity'] = [0, 0, 0]
         trackerDict['vive_timestamp_last_tracked'] = 0
-        trackerDict['time_since_last_tracked'] = pb_msg.trackers[i].time_since_last_tracked
-            
+        trackerDict['time_since_last_tracked'] = pb_msg.trackers[i].time_since_last_tracked            
         trackerDict['serial_number'] = "TODO"
-                
+        
+        pose_matrix = [[0, 0, 0, 0],
+                       [0, 0, 0, 0],
+                       [0, 0, 0, 0],
+                       [0, 0, 0, 0]]
+        pose_matrix[0][0] = pb_msg.trackers[i].pose_matrix.i0j0
+        pose_matrix[0][1] = pb_msg.trackers[i].pose_matrix.i0j1
+        pose_matrix[0][2] = pb_msg.trackers[i].pose_matrix.i0j2
+        pose_matrix[0][3] = pb_msg.trackers[i].pose_matrix.i0j3
+        pose_matrix[1][0] = pb_msg.trackers[i].pose_matrix.i1j0
+        pose_matrix[1][1] = pb_msg.trackers[i].pose_matrix.i1j1
+        pose_matrix[1][2] = pb_msg.trackers[i].pose_matrix.i1j2
+        pose_matrix[1][3] = pb_msg.trackers[i].pose_matrix.i1j3
+        pose_matrix[2][0] = pb_msg.trackers[i].pose_matrix.i2j0
+        pose_matrix[2][1] = pb_msg.trackers[i].pose_matrix.i2j1
+        pose_matrix[2][2] = pb_msg.trackers[i].pose_matrix.i2j2
+        pose_matrix[2][3] = pb_msg.trackers[i].pose_matrix.i2j3
+        pose_matrix[3][0] = pb_msg.trackers[i].pose_matrix.i3j0
+        pose_matrix[3][1] = pb_msg.trackers[i].pose_matrix.i3j1
+        pose_matrix[3][2] = pb_msg.trackers[i].pose_matrix.i3j2
+        pose_matrix[3][3] = pb_msg.trackers[i].pose_matrix.i3j3
+        trackerDict['pose_matrix'] = pose_matrix
+        
+
+
         ret["tracker_"+str(i)] = trackerDict
 
-    return ret
+    return ret, nbTrackers
 
 
 
@@ -97,6 +138,11 @@ def get_dummy_trackerInfos():
         trackerDict['vive_timestamp_last_tracked'] = time.perf_counter()
         trackerDict['time_since_last_tracked'] = 0
         trackerDict['serial_number'] = "SERIALNUMBER123"
+        pose_matrix = [[0, 0, 0, 0],
+                       [0, 0, 0, 0],
+                       [0, 0, 0, 0],
+                       [0, 0, 0, 0]]
+        trackerDict['pose_matrix'] = pose_matrix
         dummy_trackerInfos["tracker_"+str(i)] = trackerDict
 
     return dummy_trackerInfos

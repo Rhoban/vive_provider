@@ -97,60 +97,13 @@ def displayAxis(center):
 
 def displayTracker(pose, color):
     glPushMatrix()
-    
-    # m = np.matrix([list(pose[0]), list(pose[1]), list(pose[2])])
-    # m = np.vstack((m, [0, 0, 0, 1]))
 
-    glMultMatrixd(pose.T)
-    
-
-    # glMaterialfv(GL_FRONT,GL_DIFFUSE,[1, 1, 1, 1])
-    # glutSolidCube(0.2)
-    # sys.exit()
-
-    
-    # glTranslatef(pose[0], pose[1], pose[2])
-    
-    # qw = pose[3]
-    # qx = pose[4]
-    # qy = pose[5]
-    # qz = pose[6]
-            
-    # angle = 2 * (math.acos(qw)*180)/math.pi
-    # x = qx / (math.sqrt(1-qw*qw) + 0.000001)
-    # y = qy / (math.sqrt(1-qw*qw) + 0.000001)
-    # z = qz / (math.sqrt(1-qw*qw) + 0.000001)
-    
-    # glRotatef(angle, x, y, z)
+    glMultMatrixd(np.mat(pose).T)
     
     glMaterialfv(GL_FRONT,GL_DIFFUSE, color)
-    glScale(0.005, 0.005, 0.005)
-    # pushMatrix()
+    glScale(0.005, 0.005, 0.005) # TODO determine scale
     glRotatef(-90, 1, 0, 0)
     obj.render_scene()
-    # popMatrix()
-
-
-    
-    # glMaterialfv(GL_FRONT,GL_DIFFUSE,color)
-
-    # thickness = 0.3
-    # radius = 0.5
-    # quad = gluNewQuadric()
-    # # glRotatef(180, 1, 0, 0)
-    # gluDisk(quad, 0, radius, 20, 1)
-    # # glRotatef(-180, 1, 0, 0)
-    # gluCylinder(quad, radius, radius, thickness, 20, 10);
-    # glTranslatef(0, 0, thickness)
-    # gluDisk(quad, 0, radius, 20, 1)
-
-
-    
-    # glMaterialfv(GL_FRONT,GL_DIFFUSE,[1, 1, 1, 1])
-    # cubeSize = 0.2
-    # glTranslatef(radius, 0 , -0.4)
-    # glutSolidCube(cubeSize)
-    # glTranslatef(-radius, 0 , 0.4)
 
     
     
@@ -162,40 +115,39 @@ def displayTracker(pose, color):
 def display():
     
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
-    
     if(clientMode):
         pb_msg = GlobalMsg()
         data, addr = client.recvfrom(1024)
-        trackersInfo = GlobalMsg_to_trackersInfos(data)
+        trackersInfo, nbTrackers = GlobalMsg_to_trackersInfos(data)
     else:
-        trackersInfo = vp.getTrackersInfos()    
+        trackersInfo = vp.getTrackersInfos()
+        nbTrackers = len(vp.trackers)
 
     displayAxis([0, 0, 0])
-
-
-    # fakeTrackerPos = [center[0], center[1], center[2], 0, 0, 0, 0]
-    # displayTracker(fakeTrackerPos, [1., 0., 0., 1])
-    # sys.exit()
-
     
     # glMatrixMode(GL_MODELVIEW)
-    # gluLookAt(center[0], center[1], center[2],
-    #           0, 0, 0,
-    #           0, 1, 0)
-    # glPushMatrix()
+
     
     # for t in range(0, len(vp.trackers)):
-    for t in vp.trackers:
+    
+    for t in range(1, nbTrackers+1):
         if(clientMode):
             tracker = trackersInfo["tracker_"+str(int(t)-1)]
         else:
             tracker = trackersInfo["tracker_"+str(int(t))]
         if(tracker['time_since_last_tracked'] == 0):
-            # pose = tracker['raw_pose']
             pose = tracker['pose_matrix']
-            # pose = tracker['pose']
+            ppose = tracker['pose']
+
+            # make the camera follow the object
+            glMatrixMode(GL_MODELVIEW);
+            glLoadIdentity();
+            gluLookAt(2, 2, 2,
+              tracker['pose'][0], tracker['pose'][1], tracker['pose'][2],
+              0, 0, 1)
+
+            
             displayTracker(pose, [0.0,0.,1.,1.])
-            # print(abs(center[0] - pose[0]), abs(center[1] - pose[1]), abs(center[2] - pose[2]))
         else:
             print(tracker['time_since_last_tracked'])
             print("tracker not visible")

@@ -18,6 +18,25 @@ message Quaternion {
   required float qz = 4;
 };
 
+message Matrix4x4 {
+  required float i0j0 = 1;
+  required float i0j1 = 2;
+  required float i0j2 = 3;
+  required float i0j3 = 4;
+  required float i1j0 = 5;
+  required float i1j1 = 6;
+  required float i1j2 = 7;
+  required float i1j3 = 8;
+  required float i2j0 = 9;
+  required float i2j1 = 10;
+  required float i2j2 = 11;
+  required float i2j3 = 12;
+  required float i3j0 = 13;
+  required float i3j1 = 14;
+  required float i3j2 = 15;
+  required float i3j3 = 16;
+};
+	
 /**
  * Describe the information regarding a vive tracker. The referential in which
  * information are provided can either be the vive referential (no calibration)
@@ -34,11 +53,12 @@ message TrackerMsg {
    * estimated state
    */
   optional uint64 time_since_last_tracked = 2;
-  
+
   optional Vector3d pos = 3;
   optional Quaternion orientation = 4;
   optional Vector3d cartesian_velocity = 5;
   optional string serial_number = 6;
+  optional Matrix4x4 pose_matrix = 7;
   // TODO: angular speed -> currently vector3d
 }
 

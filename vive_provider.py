@@ -7,21 +7,11 @@ import sys
 import numpy as np
 from utils import *
 import  numpy.linalg as linalg
-# translation
-# deux vecteurs (1, 0, 0) dans repere terrain, et le vecteur dans repere du vive
-# angle entre deux vecteurs normalisés
-#   acos(dot(v1, v2))
-# axe
-# cross
-
 
 class Calib:
     def __init__(self, positions, halfField):
         self.positions = positions
         self.halfField = halfField
-        
-        # deducing last position from first three
-        self.positions['3'] = [self.positions[2][0], self.positions[0][1], self.positions[2][2]]
 
         self.t = np.mat([])
         self.R = np.mat([])
@@ -53,12 +43,6 @@ class Calib:
         m = np.vstack((m, [0, 0, 0, 1]))
         
         return m
-        
-        
-    def get_corrected_position(self, pose):
-        corrected = self.R*np.mat(pose).T + self.t
-        
-        return corrected            
         
 
 class Vive_provider:
@@ -142,12 +126,10 @@ class Vive_provider:
                  [0, 0, 0, 1]])
             m = m*Rz
 
-            corrected = self.calib.get_transformation_matrix()*m            
+            corrected = self.calib.get_transformation_matrix()*m
             
-            trackerDict['raw_pose'] = pose[id].mDeviceToAbsoluteTracking
-            trackerDict['pose'] = [corrected[0], corrected[1], corrected[2], ppose[3], ppose[4], ppose[5], ppose[6]]
+            trackerDict['pose'] = convert_to_quaternion(np.array(corrected[:3, :4]))
             trackerDict['pose_matrix'] = corrected
-            
             trackerDict['velocity'] = [pose[id].vVelocity[0], pose[id].vVelocity[1], pose[id].vVelocity[2]]
             trackerDict['angularVelocity'] = [pose[id].vAngularVelocity[0], pose[id].vAngularVelocity[1], pose[id].vAngularVelocity[2]]
             
