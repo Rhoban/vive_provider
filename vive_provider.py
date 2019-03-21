@@ -77,7 +77,7 @@ class Vive_provider:
                 ids[str(i)] = {}
                 ids[str(i)]["serial_number"] = serial_number
                 if device_class == openvr.TrackedDeviceClass_Controller: 
-                    ids[str(i)]["device_type"] = "controler"        
+                    ids[str(i)]["device_type"] = "controller"        
                 else:
                     ids[str(i)]["device_type"] = "tracker"
                 
@@ -105,6 +105,18 @@ class Vive_provider:
     #    },
     # ...
     # }    
+    
+    def getControllersInfos(self, raw=False):
+        controllers = []
+        trackers = self.getTrackersInfos(raw)
+
+        for id in self.trackers:
+            name = 'tracker_'+str(id)
+            if trackers[name]['device_type'] == 'controller':
+                controllers.append(trackers[name])
+
+        return controllers
+
     def getTrackersInfos(self, raw=False):
         
         pose = self.vr.getDeviceToAbsoluteTrackingPose(openvr.TrackingUniverseStanding, 0, openvr.k_unMaxTrackedDeviceCount)
@@ -118,22 +130,20 @@ class Vive_provider:
             trackerDict = {}
 
             ppose = convert_to_quaternion(pose[id].mDeviceToAbsoluteTracking)
-            if raw:
-                return ppose
 
             p = pose[id].mDeviceToAbsoluteTracking
-            
             m = np.matrix([list(p[0]), list(p[1]), list(p[2])])
             m = np.vstack((m, [0, 0, 0, 1]))
-
-            Rz = np.matrix([
-                [math.cos(math.pi/2), -math.sin(math.pi/2), 0, 0],
-                [math.sin(math.pi/2), math.cos(math.pi/2), 0, 0],
-                 [0, 0, 1, 0],
-                 [0, 0, 0, 1]])
-            m = m*Rz
-
-            corrected = self.calib.get_transformation_matrix()*m
+            corrected = m
+            
+            if not raw:
+                Rz = np.matrix([
+                    [math.cos(math.pi/2), -math.sin(math.pi/2), 0, 0],
+                    [math.sin(math.pi/2), math.cos(math.pi/2), 0, 0],
+                    [0, 0, 1, 0],
+                    [0, 0, 0, 1]])
+                m = m*Rz
+                corrected = self.calib.get_transformation_matrix()*m
             
             trackerDict['pose'] = convert_to_quaternion(np.array(corrected[:3, :4]))
             trackerDict['pose_matrix'] = corrected
@@ -152,6 +162,9 @@ class Vive_provider:
             trackerDict['device_type'] = self.trackers[str(t)]['device_type']
             # trackerDict['button_state'] = self.trackers[str(t)]['device_type']
 
+            if trackerDict['device_type'] == 'controller':
+                _, state = self.vr.getControllerState(id)
+                trackerDict['buttonPressed'] = (state.ulButtonPressed != 0)
             # print(self.vr.getControllerState(t))
 # self.vr.getDeviceToAbsoluteTrackingPose(openvr.TrackingUniverseStanding, 0, openvr.k_unMaxTrackedDeviceCount)z
             
