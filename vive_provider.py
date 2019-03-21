@@ -162,9 +162,9 @@ class Vive_provider:
             trackerDict['device_type'] = self.trackers[str(t)]['device_type']
             # trackerDict['button_state'] = self.trackers[str(t)]['device_type']
 
-            if trackerDict['device_type'] == 'controller':
-                _, state = self.vr.getControllerState(id)
-                trackerDict['buttonPressed'] = (state.ulButtonPressed != 0)
+            # if trackerDict['device_type'] == 'controller':
+            #     _, state = self.vr.getControllerState(id)
+            #     trackerDict['buttonPressed'] = (state.ulButtonPressed != 0)
             # print(self.vr.getControllerState(t))
 # self.vr.getDeviceToAbsoluteTrackingPose(openvr.TrackingUniverseStanding, 0, openvr.k_unMaxTrackedDeviceCount)z
             
