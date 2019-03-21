@@ -104,12 +104,8 @@ def displayTracker(pose, color):
     glScale(0.005, 0.005, 0.005) # TODO determine scale
     glRotatef(-90, 1, 0, 0)
     obj.render_scene()
-
     
-    
-    glPopMatrix()
-    glutSwapBuffers()
-    glutPostRedisplay()    
+    glPopMatrix() 
             
 
 def display():
@@ -129,7 +125,7 @@ def display():
 
     
     # for t in range(0, len(vp.trackers)):
-
+    first = True
     for t in vp.trackers:
         tracker = trackersInfo["tracker_"+str(int(t))]
     
@@ -145,24 +141,27 @@ def display():
     #         else:
     #             print("coucou")
     #             continue
-            
+                    
         if(tracker['time_since_last_tracked'] == 0):
             pose = tracker['pose_matrix']
-            ppose = tracker['pose']
+            # ppose = tracker['pose']
 
             # make the camera follow the object
             glMatrixMode(GL_MODELVIEW);
-            glLoadIdentity();
-            gluLookAt(2, 2, 2,
-              tracker['pose'][0], tracker['pose'][1], tracker['pose'][2],
-              0, 0, 1)
+            if first:
+                first = False
+                glLoadIdentity();
+                gluLookAt(2, 2, 2,
+                0, 0, 0,
+                # tracker['pose'][0], tracker['pose'][1], tracker['pose'][2],
+                0, 0, 1)
 
-            
             displayTracker(pose, [0.0,0.,1.,1.])
         else:
             print(tracker['time_since_last_tracked'])
             print("tracker not visible")
-        
+        glutSwapBuffers()
+        glutPostRedisplay()   
 
     
 main()
