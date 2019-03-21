@@ -6,6 +6,7 @@ import math
 import sys
 import numpy as np
 from utils import *
+import  numpy.linalg as linalg
 # translation
 # deux vecteurs (1, 0, 0) dans repere terrain, et le vecteur dans repere du vive
 # angle entre deux vecteurs normalisés
@@ -21,34 +22,43 @@ class Calib:
         
         # deducing last position from first three
         self.positions['3'] = [self.positions[2][0], self.positions[0][1], self.positions[2][2]]
-        # self.get_corrected_position()
-        
-    def get_corrected_position(self):
-        center = [0, 0, 0]
-        
-        if self.halfField:
-            center[0] = self.positions[2][0] # center x
+
+        self.t = np.mat([])
+        self.R = np.mat([])
+        self.computeTranslationAndRotation()
+
+    def computeTranslationAndRotation(self):
+        field_positions = []
+        if(self.halfField):
+            field_positions = [[-4.5, 3, 0],
+                               [-4.5, -3, 0],
+                               [0, 3, 0]]
         else:
-            center[0] = (max(self.positions[1][0], self.positions[2][0]) - max(self.positions[1][0], self.positions[2][0])) /2 ,  # center y
-                        
-        center[1] = (max(self.positions[0][1], self.positions[1][1]) - min(self.positions[0][1], self.positions[1][1]))/2  # center y
-        center[2] = self.positions[0][2]
-
-        print(center)
-
-    def get_center(self):
-        center = [0, 0, 0]
+            field_positions = [[-4.5, 3, 0],
+                               [-4.5, -3, 0],
+                               [4.5, -3, 0]]
         
-        if self.halfField:
-            center[0] = self.positions[2][0] # center x
-        else:
-            center[0] = (max(self.positions[1][0], self.positions[2][0]) - max(self.positions[1][0], self.positions[2][0])) /2  # center x
-                        
-        center[1] = (max(self.positions[0][1], self.positions[1][1]) - min(self.positions[0][1], self.positions[1][1]))/2  # center y
-        center[2] = self.positions[0][2]
+        positions = [self.positions[0],
+                     self.positions[1],
+                     self.positions[2]]
+        
+        R, t = rigid_transform_3D(np.mat(positions), np.mat(field_positions))
 
-        return center
-            
+        self.t = t
+        self.R = R
+
+    def get_transformation_matrix(self):
+        m = self.R.copy()
+        m = np.hstack((m, self.t))
+        m = np.vstack((m, [0, 0, 0, 1]))
+        
+        return m
+        
+        
+    def get_corrected_position(self, pose):
+        corrected = self.R*np.mat(pose).T + self.t
+        
+        return corrected            
         
 
 class Vive_provider:
@@ -117,7 +127,27 @@ class Vive_provider:
         for t in self.trackers:
             id = int(t[0])
             trackerDict = {}
-            trackerDict['pose'] = convert_to_quaternion(pose[id].mDeviceToAbsoluteTracking)
+
+            ppose = convert_to_quaternion(pose[id].mDeviceToAbsoluteTracking)
+
+            p = pose[id].mDeviceToAbsoluteTracking
+            
+            m = np.matrix([list(p[0]), list(p[1]), list(p[2])])
+            m = np.vstack((m, [0, 0, 0, 1]))
+
+            Rz = np.matrix([
+                [math.cos(math.pi/2), -math.sin(math.pi/2), 0, 0],
+                [math.sin(math.pi/2), math.cos(math.pi/2), 0, 0],
+                 [0, 0, 1, 0],
+                 [0, 0, 0, 1]])
+            m = m*Rz
+
+            corrected = self.calib.get_transformation_matrix()*m            
+            
+            trackerDict['raw_pose'] = pose[id].mDeviceToAbsoluteTracking
+            trackerDict['pose'] = [corrected[0], corrected[1], corrected[2], ppose[3], ppose[4], ppose[5], ppose[6]]
+            trackerDict['pose_matrix'] = corrected
+            
             trackerDict['velocity'] = [pose[id].vVelocity[0], pose[id].vVelocity[1], pose[id].vVelocity[2]]
             trackerDict['angularVelocity'] = [pose[id].vAngularVelocity[0], pose[id].vAngularVelocity[1], pose[id].vAngularVelocity[2]]
             

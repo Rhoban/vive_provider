@@ -1,6 +1,9 @@
 import math
 from vive_pb2 import *
 import time
+import numpy as np
+
+import  numpy.linalg as linalg
 
 #Convert the standard 3x4 position/rotation matrix to a x,y,z location and the appropriate Euler angles (in degrees)
 def convert_to_euler(pose_mat):
@@ -97,3 +100,37 @@ def get_dummy_trackerInfos():
         dummy_trackerInfos["tracker_"+str(i)] = trackerDict
 
     return dummy_trackerInfos
+
+# Taken from https://nghiaho.com/?page_id=671
+# R : rotation matrix
+# t : translation vector
+def rigid_transform_3D(A, B):
+    assert len(A) == len(B)
+
+    N = A.shape[0]; # total points
+
+    centroid_A = np.mean(A, axis=0)
+    centroid_B = np.mean(B, axis=0)
+    
+    # centre the points
+    AA = A - np.tile(centroid_A, (N, 1))
+    BB = B - np.tile(centroid_B, (N, 1))
+
+    # dot is matrix multiplication for array
+    H = np.transpose(AA) * BB
+
+    U, S, Vt = linalg.svd(H)
+
+    R = Vt.T * U.T
+
+    # special reflection case
+    if linalg.det(R) < 0:
+       # print("Reflection detected")
+       Vt[2,:] *= -1
+       R = Vt.T * U.T
+
+    t = -R*centroid_A.T + centroid_B.T
+
+    # print(t)
+
+    return R, t

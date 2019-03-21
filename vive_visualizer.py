@@ -8,6 +8,11 @@ import sys
 import socket
 from vive_pb2 import *
 from utils import * 
+from objloader import *
+
+
+texture = load_texture('assets/black.png')
+obj = ObjLoader('assets/HTC_Vive_Tracker.obj')
 
 
 clientMode = False
@@ -47,13 +52,13 @@ def main():
     
     glMatrixMode(GL_PROJECTION)
     
-    gluPerspective(40., 1. ,1. ,40.)
+    gluPerspective(60., 1. ,1. ,40.)
     
     glMatrixMode(GL_MODELVIEW)
     
-    gluLookAt(10, 10, 10,
+    gluLookAt(2, 2, 2,
               0, 0, 0,
-              0, 1, 0)
+              0, 0, 1)
     
     glPushMatrix()
     glutMainLoop()
@@ -62,61 +67,90 @@ def main():
 
 def displayAxis(center):
     glPushMatrix()
-    quad = gluNewQuadric()
-    glTranslatef(center[0], center[1], center[2])
     
-    color = [1., 0., 0., 1.]
-    glMaterialfv(GL_FRONT,GL_DIFFUSE,color)
-    gluCylinder(quad, 0.05, 0.05, 3, 30, 30);
+    glDisable(GL_LIGHTING)
+    glLineWidth(6);
+    glColor3f(1.0, 0.0, 0.0);
+    glBegin(GL_LINES);
+    glVertex3f(0.0, 0.0, 0.0);
+    glVertex3f(1., 0, 0);
+    glEnd();
 
-    color = [0., 1., 0., 1.]    
-    glRotatef(90, 0, 1, 0);
-    glMaterialfv(GL_FRONT,GL_DIFFUSE,color)
-    gluCylinder(quad, 0.05, 0.05, 3, 30, 30);
+    glLineWidth(6);
+    glColor3f(0.0, 1.0, 0.0);
+    glBegin(GL_LINES);
+    glVertex3f(0.0, 0.0, 0.0);
+    glVertex3f(0., 1, 0);
+    glEnd();
 
-    color = [0., 0., 1., 1.]
-    glRotatef(90, 0, 0, 1);
-    glRotatef(90, 0, 1, 0);
-    
-    glMaterialfv(GL_FRONT,GL_DIFFUSE,color)
-    gluCylinder(quad, 0.05, 0.05, 3, 30, 30);
+    glLineWidth(6);
+    glColor3f(0.0, 0.0, 1.0);
+    glBegin(GL_LINES);
+    glVertex3f(0.0, 0.0, 0.0);
+    glVertex3f(0., 0, 1);
+    glEnd();
+
+    glEnable(GL_LIGHTING)
 
     glPopMatrix()
 
 
 def displayTracker(pose, color):
     glPushMatrix()
-    glTranslatef(pose[0]*2, pose[1]*2, pose[2]*2)
     
-    qw = pose[3]
-    qx = pose[4]
-    qy = pose[5]
-    qz = pose[6]
-            
-    angle = 2 * (math.acos(qw)*180)/math.pi
-    x = qx / (math.sqrt(1-qw*qw) + 0.000001)
-    y = qy / (math.sqrt(1-qw*qw) + 0.000001)
-    z = qz / (math.sqrt(1-qw*qw) + 0.000001)
-            
-    glRotatef(angle, x, y, z);
+    # m = np.matrix([list(pose[0]), list(pose[1]), list(pose[2])])
+    # m = np.vstack((m, [0, 0, 0, 1]))
+
+    glMultMatrixd(pose.T)
     
-    glMaterialfv(GL_FRONT,GL_DIFFUSE,color)
 
-    thickness = 0.3
-    radius = 0.5
-    quad = gluNewQuadric()
-    glRotatef(180, 1, 0, 0)
-    gluDisk(quad, 0, radius, 20, 1)
-    glRotatef(-180, 1, 0, 0)
-    gluCylinder(quad, radius, radius, thickness, 20, 10);
-    glTranslatef(0, 0, thickness)
-    gluDisk(quad, 0, radius, 20, 1)
+    # glMaterialfv(GL_FRONT,GL_DIFFUSE,[1, 1, 1, 1])
+    # glutSolidCube(0.2)
+    # sys.exit()
 
-    glMaterialfv(GL_FRONT,GL_DIFFUSE,[1, 1, 1, 1])
-    cubeSize = 0.2
-    glTranslatef(radius, 0 , -0.4)
-    glutSolidCube(cubeSize)
-    glTranslatef(-radius, 0 , 0.4)
+    
+    # glTranslatef(pose[0], pose[1], pose[2])
+    
+    # qw = pose[3]
+    # qx = pose[4]
+    # qy = pose[5]
+    # qz = pose[6]
+            
+    # angle = 2 * (math.acos(qw)*180)/math.pi
+    # x = qx / (math.sqrt(1-qw*qw) + 0.000001)
+    # y = qy / (math.sqrt(1-qw*qw) + 0.000001)
+    # z = qz / (math.sqrt(1-qw*qw) + 0.000001)
+    
+    # glRotatef(angle, x, y, z)
+    
+    glMaterialfv(GL_FRONT,GL_DIFFUSE, color)
+    glScale(0.005, 0.005, 0.005)
+    # pushMatrix()
+    glRotatef(-90, 1, 0, 0)
+    obj.render_scene()
+    # popMatrix()
+
+
+    
+    # glMaterialfv(GL_FRONT,GL_DIFFUSE,color)
+
+    # thickness = 0.3
+    # radius = 0.5
+    # quad = gluNewQuadric()
+    # # glRotatef(180, 1, 0, 0)
+    # gluDisk(quad, 0, radius, 20, 1)
+    # # glRotatef(-180, 1, 0, 0)
+    # gluCylinder(quad, radius, radius, thickness, 20, 10);
+    # glTranslatef(0, 0, thickness)
+    # gluDisk(quad, 0, radius, 20, 1)
+
+
+    
+    # glMaterialfv(GL_FRONT,GL_DIFFUSE,[1, 1, 1, 1])
+    # cubeSize = 0.2
+    # glTranslatef(radius, 0 , -0.4)
+    # glutSolidCube(cubeSize)
+    # glTranslatef(-radius, 0 , 0.4)
 
     
     
@@ -136,24 +170,32 @@ def display():
     else:
         trackersInfo = vp.getTrackersInfos()    
 
-    center = vp.calib.get_center()
-    displayAxis(center)
+    displayAxis([0, 0, 0])
+
+
+    # fakeTrackerPos = [center[0], center[1], center[2], 0, 0, 0, 0]
+    # displayTracker(fakeTrackerPos, [1., 0., 0., 1])
+    # sys.exit()
+
     
-    glMatrixMode(GL_MODELVIEW)
-    gluLookAt(center[0], center[1], center[2],
-              0, 0, 0,
-              0, 1, 0)
-    glPushMatrix()
-        
-    for t in range(0, 1):
-    # for t in vp.trackers:
+    # glMatrixMode(GL_MODELVIEW)
+    # gluLookAt(center[0], center[1], center[2],
+    #           0, 0, 0,
+    #           0, 1, 0)
+    # glPushMatrix()
+    
+    # for t in range(0, len(vp.trackers)):
+    for t in vp.trackers:
         if(clientMode):
-            tracker = trackersInfo["tracker_"+str(t)]
+            tracker = trackersInfo["tracker_"+str(int(t)-1)]
         else:
-            tracker = trackersInfo["tracker_"+str(t+1)]
+            tracker = trackersInfo["tracker_"+str(int(t))]
         if(tracker['time_since_last_tracked'] == 0):
-            pose = tracker['pose']
-            displayTracker(pose, [0.0,0.,1.,1.])            
+            # pose = tracker['raw_pose']
+            pose = tracker['pose_matrix']
+            # pose = tracker['pose']
+            displayTracker(pose, [0.0,0.,1.,1.])
+            # print(abs(center[0] - pose[0]), abs(center[1] - pose[1]), abs(center[2] - pose[2]))
         else:
             print(tracker['time_since_last_tracked'])
             print("tracker not visible")
