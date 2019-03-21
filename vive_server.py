@@ -28,4 +28,4 @@ while True:
     
     bytes_sent = server.sendto(trackersInfos, ('<broadcast>', 37020))
     print("bytes_sent: {}".format(bytes_sent))
-    time.sleep(0.01)
+    time.sleep(0.1)

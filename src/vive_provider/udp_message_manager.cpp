@@ -114,5 +114,24 @@ void UDPMessageManager::loadMessages(const std::string & path) {
   }
 }
 
+GlobalMsg UDPMessageManager::getMessage(uint64_t time_stamp) {
+  // If empty or no data prior to time_stamp, return empty message
+  if (messages.size() == 0 || messages.begin()->first > time_stamp) {
+    return GlobalMsg();
+  }
+  auto it = messages.upper_bound(time_stamp);
+  if (it == messages.end()) {
+    it--;
+  }
+  return it->second;
+}
+
+uint64_t UDPMessageManager::getStart() const {
+  if (messages.size() == 0) {
+    return 0;
+  }
+  return messages.begin()->first;
+}
+
 }
 

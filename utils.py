@@ -88,7 +88,7 @@ def get_dummy_trackerInfos():
 
     for i in range(1, 3):
         trackerDict = {}
-        trackerDict['pose'] = [1, 2, 3, 4, 5, 6, 7]
+        trackerDict['pose'] = [1, 2, 3, 0, 0, 0, 0]
         trackerDict['velocity'] = [1, 2, 3]
         trackerDict['angularVelocity'] = [1, 2, 3]
         trackerDict['vive_timestamp_last_tracked'] = time.perf_counter()

@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 #
 #
@@ -33,6 +33,11 @@ class ObjLoader(object):
         self.quad_faces = []
         self.polygon_faces = []
         self.normals = []
+
+        self.triangle_faces_list = None
+        self.quad_faces_list = None
+        self.polygon_faces_list = None
+
         #-----------------------
         try:
             f = open(filename)
@@ -85,47 +90,75 @@ class ObjLoader(object):
     def render_scene(self):
         if len(self.triangle_faces) > 0:
             #-------------------------------
-            glBegin(GL_TRIANGLES)
-            for face in (self.triangle_faces):
-                n = face[0]
-                normal = self.normals[int(n[n.find("/")+1:])-1]
-                glNormal3fv(normal)
-                for f in (face):
-                    glVertex3fv(self.vertices[int(f[:f.find("/")])-1])
-            glEnd()
+
+            if self.triangle_faces_list is None:
+                self.triangle_faces_list = glGenLists(1)
+                glNewList(self.triangle_faces_list, GL_COMPILE)
+
+                glBegin(GL_TRIANGLES)
+                for face in (self.triangle_faces):
+                    n = face[0]
+                    normal = self.normals[int(n[n.find("/")+1:])-1]
+                    glNormal3fv(normal)
+                    for f in (face):
+                        glVertex3fv(self.vertices[int(f[:f.find("/")])-1])
+                glEnd()
+                glEndList()
+                glCallList(self.triangle_faces_list)
+            else:
+                glCallList(self.triangle_faces_list)
             #---------------------------------
 
         if len(self.quad_faces) > 0:
             #----------------------------------
-            glBegin(GL_QUADS)
-            for face in (self.quad_faces):
-                n = face[0]
-                normal = self.normals[int(n[n.find("/")+1:])-1]
-                glNormal3fv(normal)
-                for f in (face):
-                    glVertex3fv(self.vertices[int(f[:f.find("/")])-1])
-            glEnd()
-            #-----------------------------------
+
+            if self.quad_faces_list is None:
+                self.quad_faces_list = glGenLists(2)
+                glNewList(self.quad_faces_list, GL_COMPILE)
+
+                glBegin(GL_QUADS)
+                for face in (self.quad_faces):
+                    n = face[0]
+                    normal = self.normals[int(n[n.find("/")+1:])-1]
+                    glNormal3fv(normal)
+                    for f in (face):
+                        glVertex3fv(self.vertices[int(f[:f.find("/")])-1])
+                glEnd()
+                glEndList()
+                glCallList(self.quad_faces_list)
+            else:
+                glCallList(self.quad_faces_list)
+                #-----------------------------------
 
         if len(self.polygon_faces) > 0:
             #----------------------------------
-            for face in (self.polygon_faces):
-                #---------------------
-                glBegin(GL_POLYGON)
-                n = face[0]
-                ns = n.split('/')
-                # print(ns)
 
-                normal = self.normals[int(ns[2])-1]
-                # normal = self.normals[int(n[n.find("/")+1:])-1]
-                glNormal3fv(normal)
-                for f in (face):
-                    # fs = f.split('/')
-                    # print(f)
-                    if f != '':
-                        glVertex3fv(self.vertices[int(f[:f.find("/")])-1])
-                    # glVertex3fv(self.vertices[int(fs[0])])
-                glEnd()
+            if self.polygon_faces_list is None:
+                self.polygon_faces_list = glGenLists(3)
+                glNewList(self.polygon_faces_list, GL_COMPILE)
+
+                for face in (self.polygon_faces):
+                    #---------------------
+                    glBegin(GL_POLYGON)
+                    n = face[0]
+                    ns = n.split('/')
+                    # print(ns)
+
+                    normal = self.normals[int(ns[2])-1]
+                    # normal = self.normals[int(n[n.find("/")+1:])-1]
+                    glNormal3fv(normal)
+                    for f in (face):
+                        # fs = f.split('/')
+                        # print(f)
+                        if f != '':
+                            glVertex3fv(self.vertices[int(f[:f.find("/")])-1])
+                        # glVertex3fv(self.vertices[int(fs[0])])
+                    glEnd()
+                glEndList()
+                glCallList(self.polygon_faces_list)
+            else:
+                glCallList(self.polygon_faces_list)
+
                 #----------------------
             #-----------------------------------
 

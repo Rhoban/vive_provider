@@ -46,6 +46,17 @@ public:
 
   const std::map<uint64_t, GlobalMsg> & getMessages() const;
 
+  /**
+   * Return the last entry before time_stamp.
+   * If there are no entry before time_stamp, returns an empty entry.
+   */
+  GlobalMsg getMessage(uint64_t time_stamp);
+
+  /**
+   * Return time_stamp of the first entry. If empty, returns 0.
+   */
+  uint64_t getStart() const;
+
 private:
   int port_read;
   int port_write;
