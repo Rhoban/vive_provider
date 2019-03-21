@@ -33,7 +33,6 @@ def trackersInfos_to_GlobalMsg(trackersInfos):
     pb_msg.time_since_epoch = trackersInfos['time_since_epoch']
 
     nbTrackers = len(trackersInfos) - 2
-
     for i in range(0, nbTrackers):
         tracker = trackersInfos["tracker_"+str(i+1)]
         pb_msg.trackers.add()
@@ -52,6 +51,33 @@ def trackersInfos_to_GlobalMsg(trackersInfos):
         pb_msg.trackers[i].serial_number = tracker['serial_number']
 
     return pb_msg
+
+def GlobalMsg_to_trackersInfos(data):
+    
+    pb_msg = GlobalMsg()
+    pb_msg.ParseFromString(data)
+
+    nbTrackers = len(pb_msg.trackers)
+
+    ret = {}
+    ret['vive_timestamp'] = pb_msg.vive_timestamp
+    ret['time_since_epoch'] = pb_msg.time_since_epoch
+    
+    for i in range(0, nbTrackers):
+        trackerDict = {}
+        trackerDict['pose'] = [pb_msg.trackers[i].pos.x, pb_msg.trackers[i].pos.y, pb_msg.trackers[i].pos.z, pb_msg.trackers[i].orientation.qw, pb_msg.trackers[i].orientation.qx, pb_msg.trackers[i].orientation.qy, pb_msg.trackers[i].orientation.qz]
+        trackerDict['velocity'] = [pb_msg.trackers[i].cartesian_velocity.x, pb_msg.trackers[i].cartesian_velocity.y, pb_msg.trackers[i].cartesian_velocity.z]
+        trackerDict['angularVelocity'] = [0, 0, 0]
+        trackerDict['vive_timestamp_last_tracked'] = 0
+        trackerDict['time_since_last_tracked'] = pb_msg.trackers[i].time_since_last_tracked
+            
+        trackerDict['serial_number'] = "TODO"
+                
+        ret["tracker_"+str(i)] = trackerDict
+
+    return ret
+
+
 
     
 def get_dummy_trackerInfos():
