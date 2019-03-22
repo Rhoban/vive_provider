@@ -33,12 +33,23 @@ positions = {}
 
 displayFieldPositions(halfField)
 
-for i in range(0, 3):
+controllersInfos = vp.getControllersInfos(raw=True)
+if len(controllersInfos) != 1:
+    print('ERROR: Calibration should have exactly one controller (found %d)' % len(controllersInfos))
+    exit()
 
-    input('Place tracker on position 0, then press enter: ')
-    trackersInfos = vp.getTrackersInfos()
-    tracker = trackersInfos["tracker_1"]
-    pose = tracker['pose']
+for i in range(0, 3):
+    print('Place tracker on position '+str(i)+', then press the button ')
+
+    # Waiting for button to be released
+    while vp.getControllersInfos(raw=True)[0]['buttonPressed']:
+        time.sleep(0.01)
+    # Waitng for button to be pressed
+    while not vp.getControllersInfos(raw=True)[0]['buttonPressed']:
+        time.sleep(0.01)
+
+    pose = vp.getControllersInfos(raw=True)[0]['pose']
+
     print(pose[0], pose[1], pose[2])
     positions[i] = [pose[0], pose[1], pose[2]]
 

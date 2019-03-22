@@ -1,6 +1,9 @@
 import math
 from vive_pb2 import *
 import time
+import numpy as np
+
+import  numpy.linalg as linalg
 
 #Convert the standard 3x4 position/rotation matrix to a x,y,z location and the appropriate Euler angles (in degrees)
 def convert_to_euler(pose_mat):
@@ -50,6 +53,24 @@ def trackersInfos_to_GlobalMsg(trackersInfos):
         pb_msg.trackers[i].cartesian_velocity.z = tracker['velocity'][2]
         pb_msg.trackers[i].serial_number = tracker['serial_number']
 
+        pose_matrix = np.array(tracker['pose_matrix'])
+        pb_msg.trackers[i].pose_matrix.i0j0 = pose_matrix[0][0]
+        pb_msg.trackers[i].pose_matrix.i0j1 = pose_matrix[0][1]
+        pb_msg.trackers[i].pose_matrix.i0j2 = pose_matrix[0][2]
+        pb_msg.trackers[i].pose_matrix.i0j3 = pose_matrix[0][3]
+        pb_msg.trackers[i].pose_matrix.i1j0 = pose_matrix[1][0]
+        pb_msg.trackers[i].pose_matrix.i1j1 = pose_matrix[1][1]
+        pb_msg.trackers[i].pose_matrix.i1j2 = pose_matrix[1][2]
+        pb_msg.trackers[i].pose_matrix.i1j3 = pose_matrix[1][3]
+        pb_msg.trackers[i].pose_matrix.i2j0 = pose_matrix[2][0]
+        pb_msg.trackers[i].pose_matrix.i2j1 = pose_matrix[2][1]
+        pb_msg.trackers[i].pose_matrix.i2j2 = pose_matrix[2][2]
+        pb_msg.trackers[i].pose_matrix.i2j3 = pose_matrix[2][3]
+        pb_msg.trackers[i].pose_matrix.i3j0 = pose_matrix[3][0]
+        pb_msg.trackers[i].pose_matrix.i3j1 = pose_matrix[3][1]
+        pb_msg.trackers[i].pose_matrix.i3j2 = pose_matrix[3][2]
+        pb_msg.trackers[i].pose_matrix.i3j3 = pose_matrix[3][3]
+
     return pb_msg
 
 def GlobalMsg_to_trackersInfos(data):
@@ -69,13 +90,36 @@ def GlobalMsg_to_trackersInfos(data):
         trackerDict['velocity'] = [pb_msg.trackers[i].cartesian_velocity.x, pb_msg.trackers[i].cartesian_velocity.y, pb_msg.trackers[i].cartesian_velocity.z]
         trackerDict['angularVelocity'] = [0, 0, 0]
         trackerDict['vive_timestamp_last_tracked'] = 0
-        trackerDict['time_since_last_tracked'] = pb_msg.trackers[i].time_since_last_tracked
-            
+        trackerDict['time_since_last_tracked'] = pb_msg.trackers[i].time_since_last_tracked            
         trackerDict['serial_number'] = "TODO"
-                
+        
+        pose_matrix = [[0, 0, 0, 0],
+                       [0, 0, 0, 0],
+                       [0, 0, 0, 0],
+                       [0, 0, 0, 0]]
+        pose_matrix[0][0] = pb_msg.trackers[i].pose_matrix.i0j0
+        pose_matrix[0][1] = pb_msg.trackers[i].pose_matrix.i0j1
+        pose_matrix[0][2] = pb_msg.trackers[i].pose_matrix.i0j2
+        pose_matrix[0][3] = pb_msg.trackers[i].pose_matrix.i0j3
+        pose_matrix[1][0] = pb_msg.trackers[i].pose_matrix.i1j0
+        pose_matrix[1][1] = pb_msg.trackers[i].pose_matrix.i1j1
+        pose_matrix[1][2] = pb_msg.trackers[i].pose_matrix.i1j2
+        pose_matrix[1][3] = pb_msg.trackers[i].pose_matrix.i1j3
+        pose_matrix[2][0] = pb_msg.trackers[i].pose_matrix.i2j0
+        pose_matrix[2][1] = pb_msg.trackers[i].pose_matrix.i2j1
+        pose_matrix[2][2] = pb_msg.trackers[i].pose_matrix.i2j2
+        pose_matrix[2][3] = pb_msg.trackers[i].pose_matrix.i2j3
+        pose_matrix[3][0] = pb_msg.trackers[i].pose_matrix.i3j0
+        pose_matrix[3][1] = pb_msg.trackers[i].pose_matrix.i3j1
+        pose_matrix[3][2] = pb_msg.trackers[i].pose_matrix.i3j2
+        pose_matrix[3][3] = pb_msg.trackers[i].pose_matrix.i3j3
+        trackerDict['pose_matrix'] = pose_matrix
+        
+
+
         ret["tracker_"+str(i)] = trackerDict
 
-    return ret
+    return ret, nbTrackers
 
 
 
@@ -88,12 +132,51 @@ def get_dummy_trackerInfos():
 
     for i in range(1, 3):
         trackerDict = {}
-        trackerDict['pose'] = [1, 2, 3, 4, 5, 6, 7]
+        trackerDict['pose'] = [1, 2, 3, 0, 0, 0, 0]
         trackerDict['velocity'] = [1, 2, 3]
         trackerDict['angularVelocity'] = [1, 2, 3]
         trackerDict['vive_timestamp_last_tracked'] = time.perf_counter()
         trackerDict['time_since_last_tracked'] = 0
         trackerDict['serial_number'] = "SERIALNUMBER123"
+        pose_matrix = [[0, 0, 0, 0],
+                       [0, 0, 0, 0],
+                       [0, 0, 0, 0],
+                       [0, 0, 0, 0]]
+        trackerDict['pose_matrix'] = pose_matrix
         dummy_trackerInfos["tracker_"+str(i)] = trackerDict
 
     return dummy_trackerInfos
+
+# Taken from https://nghiaho.com/?page_id=671
+# R : rotation matrix
+# t : translation vector
+def rigid_transform_3D(A, B):
+    assert len(A) == len(B)
+
+    N = A.shape[0]; # total points
+
+    centroid_A = np.mean(A, axis=0)
+    centroid_B = np.mean(B, axis=0)
+    
+    # centre the points
+    AA = A - np.tile(centroid_A, (N, 1))
+    BB = B - np.tile(centroid_B, (N, 1))
+
+    # dot is matrix multiplication for array
+    H = np.transpose(AA) * BB
+
+    U, S, Vt = linalg.svd(H)
+
+    R = Vt.T * U.T
+
+    # special reflection case
+    if linalg.det(R) < 0:
+       # print("Reflection detected")
+       Vt[2,:] *= -1
+       R = Vt.T * U.T
+
+    t = -R*centroid_A.T + centroid_B.T
+
+    # print(t)
+
+    return R, t

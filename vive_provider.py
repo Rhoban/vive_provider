@@ -6,49 +6,43 @@ import math
 import sys
 import numpy as np
 from utils import *
-# translation
-# deux vecteurs (1, 0, 0) dans repere terrain, et le vecteur dans repere du vive
-# angle entre deux vecteurs normalisés
-#   acos(dot(v1, v2))
-# axe
-# cross
-
+import  numpy.linalg as linalg
 
 class Calib:
     def __init__(self, positions, halfField):
         self.positions = positions
         self.halfField = halfField
-        
-        # deducing last position from first three
-        self.positions['3'] = [self.positions[2][0], self.positions[0][1], self.positions[2][2]]
-        # self.get_corrected_position()
-        
-    def get_corrected_position(self):
-        center = [0, 0, 0]
-        
-        if self.halfField:
-            center[0] = self.positions[2][0] # center x
+
+        self.t = np.mat([])
+        self.R = np.mat([])
+        self.computeTranslationAndRotation()
+
+    def computeTranslationAndRotation(self):
+        field_positions = []
+        if(self.halfField):
+            field_positions = [[-4.5, 3, 0],
+                               [-4.5, -3, 0],
+                               [0, 3, 0]]
         else:
-            center[0] = (max(self.positions[1][0], self.positions[2][0]) - max(self.positions[1][0], self.positions[2][0])) /2 ,  # center y
-                        
-        center[1] = (max(self.positions[0][1], self.positions[1][1]) - min(self.positions[0][1], self.positions[1][1]))/2  # center y
-        center[2] = self.positions[0][2]
-
-        print(center)
-
-    def get_center(self):
-        center = [0, 0, 0]
+            field_positions = [[-4.5, 3, 0],
+                               [-4.5, -3, 0],
+                               [4.5, -3, 0]]
         
-        if self.halfField:
-            center[0] = self.positions[2][0] # center x
-        else:
-            center[0] = (max(self.positions[1][0], self.positions[2][0]) - max(self.positions[1][0], self.positions[2][0])) /2  # center x
-                        
-        center[1] = (max(self.positions[0][1], self.positions[1][1]) - min(self.positions[0][1], self.positions[1][1]))/2  # center y
-        center[2] = self.positions[0][2]
+        positions = [self.positions[0],
+                     self.positions[1],
+                     self.positions[2]]
+        
+        R, t = rigid_transform_3D(np.mat(positions), np.mat(field_positions))
 
-        return center
-            
+        self.t = t
+        self.R = R
+
+    def get_transformation_matrix(self):
+        m = self.R.copy()
+        m = np.hstack((m, self.t))
+        m = np.vstack((m, [0, 0, 0, 1]))
+        
+        return m
         
 
 class Vive_provider:
@@ -76,13 +70,18 @@ class Vive_provider:
             if not pose.bPoseIsValid:
                 continue
             device_class = openvr.VRSystem().getTrackedDeviceClass(i)
-            # if(not device_class == openvr.TrackedDeviceClass_GenericTracker or not device_class == openvr.TrackedDeviceClass_Controller):
-            #     continue
-            if not device_class == openvr.TrackedDeviceClass_GenericTracker:
-                continue            
-            serial_number = openvr.VRSystem().getStringTrackedDeviceProperty(i, openvr.Prop_SerialNumber_String)
-            ids[str(i)] = serial_number
-            
+
+            if(device_class == openvr.TrackedDeviceClass_GenericTracker or device_class == openvr.TrackedDeviceClass_Controller):
+                serial_number = openvr.VRSystem().getStringTrackedDeviceProperty(i, openvr.Prop_SerialNumber_String)
+
+                ids[str(i)] = {}
+                ids[str(i)]["serial_number"] = serial_number
+                if device_class == openvr.TrackedDeviceClass_Controller: 
+                    ids[str(i)]["device_type"] = "controller"        
+                else:
+                    ids[str(i)]["device_type"] = "tracker"
+                
+        print(ids)
         self.trackers = ids    
 
     # Returns dictionary :
@@ -106,7 +105,19 @@ class Vive_provider:
     #    },
     # ...
     # }    
-    def getTrackersInfos(self):
+    
+    def getControllersInfos(self, raw=False):
+        controllers = []
+        trackers = self.getTrackersInfos(raw)
+
+        for id in self.trackers:
+            name = 'tracker_'+str(id)
+            if trackers[name]['device_type'] == 'controller':
+                controllers.append(trackers[name])
+
+        return controllers
+
+    def getTrackersInfos(self, raw=False):
         
         pose = self.vr.getDeviceToAbsoluteTrackingPose(openvr.TrackingUniverseStanding, 0, openvr.k_unMaxTrackedDeviceCount)
         ret = {}
@@ -117,7 +128,25 @@ class Vive_provider:
         for t in self.trackers:
             id = int(t[0])
             trackerDict = {}
-            trackerDict['pose'] = convert_to_quaternion(pose[id].mDeviceToAbsoluteTracking)
+
+            ppose = convert_to_quaternion(pose[id].mDeviceToAbsoluteTracking)
+
+            p = pose[id].mDeviceToAbsoluteTracking
+            m = np.matrix([list(p[0]), list(p[1]), list(p[2])])
+            m = np.vstack((m, [0, 0, 0, 1]))
+            corrected = m
+            
+            if not raw:
+                Rz = np.matrix([
+                    [math.cos(math.pi/2), -math.sin(math.pi/2), 0, 0],
+                    [math.sin(math.pi/2), math.cos(math.pi/2), 0, 0],
+                    [0, 0, 1, 0],
+                    [0, 0, 0, 1]])
+                m = m*Rz
+                corrected = self.calib.get_transformation_matrix()*m
+            
+            trackerDict['pose'] = convert_to_quaternion(np.array(corrected[:3, :4]))
+            trackerDict['pose_matrix'] = corrected
             trackerDict['velocity'] = [pose[id].vVelocity[0], pose[id].vVelocity[1], pose[id].vVelocity[2]]
             trackerDict['angularVelocity'] = [pose[id].vAngularVelocity[0], pose[id].vAngularVelocity[1], pose[id].vAngularVelocity[2]]
             
@@ -130,6 +159,15 @@ class Vive_provider:
 
             # trackerDict['serialNumber'] = t[1]
             trackerDict['serial_number'] = "TODO"
+            trackerDict['device_type'] = self.trackers[str(t)]['device_type']
+            # trackerDict['button_state'] = self.trackers[str(t)]['device_type']
+
+            # if trackerDict['device_type'] == 'controller':
+            #     _, state = self.vr.getControllerState(id)
+            #     trackerDict['buttonPressed'] = (state.ulButtonPressed != 0)
+            # print(self.vr.getControllerState(t))
+# self.vr.getDeviceToAbsoluteTrackingPose(openvr.TrackingUniverseStanding, 0, openvr.k_unMaxTrackedDeviceCount)z
+            
                 
             ret["tracker_"+str(id)] = trackerDict
 
