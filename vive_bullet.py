@@ -58,7 +58,7 @@ while True:
 
         p.resetBasePositionAndOrientation(trackers[id], position, orientation)
 
-    # Si on veut faire de la simu physique!
-    sleep(dt)
-    t += dt
-    p.stepSimulation()
+    # Uncomment if you want to enable physics simulation
+    # sleep(dt)
+    # t += dt
+    # p.stepSimulation()
