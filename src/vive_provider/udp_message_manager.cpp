@@ -114,7 +114,10 @@ void UDPMessageManager::loadMessages(const std::string & path) {
   }
 }
 
-GlobalMsg UDPMessageManager::getMessage(uint64_t time_stamp) {
+GlobalMsg UDPMessageManager::getMessage(uint64_t time_stamp, bool system_clock) {
+  if (system_clock) {
+    time_stamp -= clock_offset;
+  }
   // If empty or no data prior to time_stamp, return empty message
   if (messages.size() == 0 || messages.begin()->first > time_stamp) {
     return GlobalMsg();
@@ -131,6 +134,25 @@ uint64_t UDPMessageManager::getStart() const {
     return 0;
   }
   return messages.begin()->first;
+}
+
+void UDPMessageManager::autoUpdateOffset() {
+  if (messages.size() > 0) {
+    const GlobalMsg & msg = messages.begin()->second;
+    if (!msg.has_time_since_epoch()) {
+      std::cerr << "Message has no 'time_since_epoch'" << std::endl;
+      return;
+    }
+    if (!msg.has_vive_timestamp()) {
+      std::cerr << "Message has no 'vive_timestamp'" << std::endl;
+      return;
+    }
+    clock_offset = msg.time_since_epoch() - msg.vive_timestamp();
+  }
+}
+
+int64_t UDPMessageManager::getOffset() const {
+  return clock_offset;
 }
 
 }
