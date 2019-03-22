@@ -4,15 +4,21 @@ import time
 import openvr
 import math
 import sys
+import json
 import numpy as np
 from utils import *
 import  numpy.linalg as linalg
 import os
 
 class Calib:
-    def __init__(self, positions, halfField):
-        self.positions = positions
-        self.halfField = halfField
+    def __init__(self, calibFilePath):
+        if os.path.exists(calibFilePath):
+            with open(calibFilePath, "r") as calibFile:
+                self.calibration = json.loads(calibFile.read())
+        else:
+            print("Calibration file not found")
+            print("Exiting ...")
+            sys.exit()
 
         self.t = np.mat([])
         self.R = np.mat([])
@@ -20,18 +26,11 @@ class Calib:
 
     def computeTranslationAndRotation(self):
         field_positions = []
-        if(self.halfField):
-            field_positions = [[-4.5, 3, 0],
-                               [-4.5, -3, 0],
-                               [0, 3, 0]]
-        else:
-            field_positions = [[-4.5, 3, 0],
-                               [-4.5, -3, 0],
-                               [4.5, -3, 0]]
-        
-        positions = [self.positions[0],
-                     self.positions[1],
-                     self.positions[2]]
+        positions = []
+
+        for entry in self.calibration:
+            field_positions.append(entry['field'])
+            positions.append(entry['vive'])
         
         R, t = rigid_transform_3D(np.mat(positions), np.mat(field_positions))
 
@@ -56,21 +55,14 @@ class Tracker:
     
 class Vive_provider:
     
-    def __init__(self, calibFilePath="calibFile.txt"):
+    def __init__(self, enableButtons=False, calibFilePath="calibFile.json"):
         
         self.vr = openvr.init(openvr.VRApplication_Other)
         self.trackers = {}
         self.lastInfos = {}
-
+        self.enableButtons = enableButtons
         
-        if os.path.exists(calibFilePath):
-            with open(calibFilePath, "r") as calibFile:
-                c = eval(calibFile.read())
-                self.calib = Calib(c["positions"], c["halfField"])
-        else:
-            print("Calibration file not found")
-            print("Exiting ...")
-            sys.exit()
+        self.calib = Calib(calibFilePath)
             
         self.scanTrackers()
 
@@ -119,13 +111,22 @@ class Vive_provider:
             corrected = m
 
             if not raw:
-                Rz = np.matrix([
-                    [math.cos(math.pi/2), -math.sin(math.pi/2), 0, 0],
-                    [math.sin(math.pi/2), math.cos(math.pi/2), 0, 0],
-                    [0, 0, 1, 0],
-                    [0, 0, 0, 1]])
-                m = m*Rz
+                if t.device_type == 'tracker':
+                    Rz = np.matrix([
+                        [math.cos(math.pi/2), -math.sin(math.pi/2), 0, 0],
+                        [math.sin(math.pi/2), math.cos(math.pi/2), 0, 0],
+                        [0, 0, 1, 0],
+                        [0, 0, 0, 1]])
+                    m = m*Rz
                 corrected = self.calib.get_transformation_matrix()*m
+
+            if t.device_type == 'controller':
+                T = np.matrix([
+                    [1, 0, 0, 0],
+                    [0, 1, 0, -0.025],
+                    [0, 0, 1, -0.025],
+                    [0, 0, 0, 1]])
+                corrected = corrected*T
 
             currentTrackerDict['openvr_id'] = t.openvr_id
             currentTrackerDict['serial_number'] = t.serial_number
@@ -140,7 +141,13 @@ class Vive_provider:
                 currentTrackerDict['time_since_last_tracked'] = 0
             else:
                 currentTrackerDict['vive_timestamp_last_tracked'] = self.lastInfos["trackers"][str(t.serial_number)]['vive_timestamp_last_tracked']
-                currentTrackerDict['time_since_last_tracked'] = ret['vive_timestamp'] - self.lastInfos[str(t.serial_number)]['vive_timestamp_last_tracked']
+                currentTrackerDict['time_since_last_tracked'] = ret['vive_timestamp'] - self.lastInfos['trackers'][str(t.serial_number)]['vive_timestamp_last_tracked']
+
+            if self.enableButtons:
+                if currentTrackerDict['device_type'] == 'controller':
+                    _, state = self.vr.getControllerState(t.openvr_id)
+                    currentTrackerDict['buttonPressed'] = (state.ulButtonPressed != 0)
+
             
             trackersDict[str(t.serial_number)] = currentTrackerDict
                 
@@ -153,11 +160,11 @@ class Vive_provider:
     
     def getControllersInfos(self, raw=False):
         controllers = []
-        trackers = self.getTrackersInfos(raw)
+        trackers = self.getTrackersInfos(raw)['trackers']
 
         for t in self.trackers.values():
             if(str(t.device_type) == "controller"):
-                controllers.append(self.trackers[t.serial_number])
+                controllers.append(trackers[str(t.serial_number)])
 
         return controllers
                 

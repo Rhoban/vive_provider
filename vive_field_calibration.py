@@ -1,45 +1,30 @@
 #!/usr/bin/python3
 
+import json
 from vive_provider import *
+from vive_bullet import BulletViewer
 
-vp = Vive_provider()
+vp = Vive_provider(enableButtons=True)
 
-halfField = False
-if(len(sys.argv)>1):
-    halfField = True    
-    
-
-def displayFieldPositions(half):
-
-    if not half:
-        print("       0-------------------------+")
-        print("       |                         |")
-        print("       |            +            |")
-        print("tables |          +   +          |  mur")
-        print("       |            +            |")
-        print("       |                         |")
-        print("       1-------------------------2")
-    else:
-        print("       0-------------------------+")
-        print("       |                         |")
-        print("       |            +            |")
-        print("tables |          +   +          |  mur")
-        print("       |            +            |")
-        print("       |                         |")
-        print("       1------------2------------+")
+# Positions 
+field_positions = [
+    [-2.37, 0, 0],
+    [0, 3, 0],
+    [0, -3, 0]
+]
         
-data = {}
-positions = {}
-
-displayFieldPositions(halfField)
+data = []
+viewer = BulletViewer(vp)
+target = viewer.addUrdf('assets/target/robot.urdf')
 
 controllersInfos = vp.getControllersInfos(raw=True)
 if len(controllersInfos) != 1:
     print('ERROR: Calibration should have exactly one controller (found %d)' % len(controllersInfos))
     exit()
 
-for i in range(0, 3):
-    print('Place tracker on position '+str(i)+', then press the button ')
+for field_position in field_positions:
+    print('Place tracker on position '+str(field_position)+', then press the button ')
+    viewer.setUrdfPosition(target, field_position)
 
     # Waiting for button to be released
     while vp.getControllersInfos(raw=True)[0]['buttonPressed']:
@@ -51,11 +36,11 @@ for i in range(0, 3):
     pose = vp.getControllersInfos(raw=True)[0]['pose']
 
     print(pose[0], pose[1], pose[2])
-    positions[i] = [pose[0], pose[1], pose[2]]
-
-data["halfField"] = halfField
-data["positions"] = positions
+    data.append({
+        'field': field_position,
+        'vive': pose[:3]
+    })
     
-calibFile = open("calibFile.txt", "w")
-calibFile.write(str(data))
+calibFile = open("calibFile.json", "w")
+calibFile.write(json.dumps(data))
 calibFile.close()

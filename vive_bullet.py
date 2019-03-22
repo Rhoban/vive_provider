@@ -5,60 +5,70 @@ from time import sleep
 from vive_provider import Vive_provider
 from utils import convert_to_euler
 
-# Initializing vive, getting trackers
-vive = Vive_provider()
+class BulletViewer:
+    def __init__(self, vive):        
+        # Initialisation de pyBullet
+        physicsClient = p.connect(p.GUI)
+        p.setGravity(0, 0, -9.8)
+        field = p.loadURDF("assets/field/robot.urdf", [0, 0, -0.01])
 
-# Initialisation de pyBullet
-physicsClient = p.connect(p.GUI)
-p.setGravity(0, 0, -9.8)
-field = p.loadURDF("assets/field/robot.urdf", [0, 0, -0.01])
+        self.vive = vive
+        self.trackers = {}
+        self.physics = False
 
-trackers = {}
-offset = None
-infos = vive.getTrackersInfos()
-for id in vive.trackers:
-    tracker = vive.trackers[id]
-    info = infos['tracker_'+str(id)]
-    startOrientation = p.getQuaternionFromEuler([0, 0, 0])
-    startPos = [0, 0, 0]
+        infos = vive.getTrackersInfos()
+        for id in vive.trackers:
+            tracker = vive.trackers[id]
+            info = infos['trackers'][id]
+            startOrientation = p.getQuaternionFromEuler([0, 0, 0])
+            startPos = [0, 0, 0]
+            
+            asset = 'assets/tracker.urdf'
+            if info['device_type'] == 'controller':
+                asset = 'assets/controller.urdf'
+            tracker = p.loadURDF(asset, startPos, startOrientation)
+            self.trackers[id] = tracker
     
-    asset = 'assets/tracker.urdf'
-    if info['device_type'] == 'controller':
-        asset = 'assets/controller.urdf'
-    tracker = p.loadURDF(asset, startPos, startOrientation)
-    trackers[id] = tracker
+    def addUrdf(self, path):
+        return p.loadURDF(path, [0, 0, 0])
 
-# Simulation en temps réel
-p.setRealTimeSimulation(0)
-dt = 0.001
-t = 0
-p.setPhysicsEngineParameter(fixedTimeStep=dt)
-offset = None
+    def setUrdfPosition(self, urdf, position, orientation=[0, 0, 0]):
+        orientation = p.getQuaternionFromEuler([0, 0, 0])
+        p.resetBasePositionAndOrientation(urdf, position, orientation)
 
-while True:
-    infos = vive.getTrackersInfos()
+    def update(self):
+        infos = vive.getTrackersInfos()
+        for id in self.vive.trackers:
+            info = infos['trackers'][id]
+            m = info['pose_matrix']
+            position = np.array(m.T[3])[0][:3]
+            orientation = m[:3,:3]
+            euler = convert_to_euler(orientation)
+            orientation = p.getQuaternionFromEuler(euler)
+
+            if id == '4':
+                print("%f\t%f\t%f\t" % tuple(euler))
+
+            p.resetBasePositionAndOrientation(self.trackers[id], position, orientation)
     
-    for id in vive.trackers:
-        info = infos['tracker_'+str(id)]
-        m = info['pose_matrix']
-        position = np.array(m.T[3])[0][:3]
+    def execute(self):
+        # Simulation en temps réel
+        p.setRealTimeSimulation(1)
+        dt = 0.001
+        t = 0
+        p.setPhysicsEngineParameter(fixedTimeStep=dt)
+        offset = None
 
-        if offset is None:
-            offset = position.copy()
+        while True:
+            self.update()
 
-        if not (offset is None):
-            position -= offset
+            if self.physics:
+                sleep(dt)
+                t += dt
+                p.stepSimulation()
 
-        orientation = m[:3,:3]
-        euler = convert_to_euler(orientation)
-        orientation = p.getQuaternionFromEuler(euler)
-
-        if id == '4':
-            print("%f\t%f\t%f\t" % tuple(euler))
-
-        p.resetBasePositionAndOrientation(trackers[id], position, orientation)
-
-    # Uncomment if you want to enable physics simulation
-    # sleep(dt)
-    # t += dt
-    # p.stepSimulation()
+if __name__ == '__main__':
+    vive = Vive_provider()
+    viewer = BulletViewer(vive)
+    viewer.physics = False
+    viewer.execute()
