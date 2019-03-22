@@ -126,8 +126,11 @@ def display():
     
     # for t in range(0, len(vp.trackers)):
     first = True
-    for t in vp.trackers:
-        tracker = trackersInfo["tracker_"+str(int(t))]
+    for t in vp.trackers.values():
+    # for t in range(0, nbTrackers):
+        # print(trackersInfo)
+        # print(t.serial_number)
+        tracker = trackersInfo["trackers"][str(t.serial_number)]
     
     # for t in range(1, nbTrackers+1):
     #     if(clientMode):
@@ -144,7 +147,9 @@ def display():
                     
         if(tracker['time_since_last_tracked'] == 0):
             pose = tracker['pose_matrix']
-            # ppose = tracker['pose']
+
+            ppose = tracker['pose']
+            # print(str(t)+str(ppose))
 
             # make the camera follow the object
             glMatrixMode(GL_MODELVIEW);
@@ -152,8 +157,8 @@ def display():
                 first = False
                 glLoadIdentity();
                 gluLookAt(2, 2, 2,
-                0, 0, 0,
-                # tracker['pose'][0], tracker['pose'][1], tracker['pose'][2],
+                # 0, 0, 0,
+                tracker['pose'][0], tracker['pose'][1], tracker['pose'][2],
                 0, 0, 1)
 
             displayTracker(pose, [0.0,0.,1.,1.])
