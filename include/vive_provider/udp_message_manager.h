@@ -50,12 +50,23 @@ public:
    * Return the last entry before time_stamp.
    * If there are no entry before time_stamp, returns an empty entry.
    */
-  GlobalMsg getMessage(uint64_t time_stamp);
+  GlobalMsg getMessage(uint64_t time_stamp, bool system_clock = false);
 
   /**
    * Return time_stamp of the first entry. If empty, returns 0.
    */
-  uint64_t getStart() const;
+  uint64_t getStart(bool system_clock = false) const;
+
+  /**
+   * Uses first vive message to compute clock offset
+   */
+  void autoUpdateOffset();
+
+  /**
+   * Get the offset in microseconds between steady_clock of vive and system_clock of vive_server
+   * (time_since_epoch)
+   */
+  int64_t getOffset() const;
 
 private:
   int port_read;
@@ -71,6 +82,12 @@ private:
   std::map<uint64_t, GlobalMsg> messages;
 
   std::unique_ptr<rhoban_utils::UDPBroadcast> broadcaster;
+
+  /**
+   * Offset in microseconds between steady_clock of vive and system_clock of
+   * vive server (time_since_epoch)
+   */
+  int64_t clock_offset;
 
   void run();
 };
