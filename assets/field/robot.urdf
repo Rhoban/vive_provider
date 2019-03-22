@@ -9,18 +9,18 @@
 <link name="field_1_0">
 <visual>
 <geometry>
-<mesh filename="package://penaltyally.stl"/>
+<mesh filename="package://table4.stl"/>
 </geometry>
 <material name="field_1_0_material">
-<color rgba="0.917647 0.917647 0.917647 1.0"/>
+<color rgba="0.447059 0.243137 0.000000 1.0"/>
 </material>
 </visual>
 <collision>
 <geometry>
-<mesh filename="package://penaltyally.stl"/>
+<mesh filename="package://table4.stl"/>
 </geometry>
 <material name="field_1_0_material">
-<color rgba="0.917647 0.917647 0.917647 1.0"/>
+<color rgba="0.447059 0.243137 0.000000 1.0"/>
 </material>
 </collision>
 <inertial>
@@ -39,18 +39,18 @@
 <link name="field_1_1">
 <visual>
 <geometry>
-<mesh filename="package://goalsally.stl"/>
+<mesh filename="package://penaltyopponent.stl"/>
 </geometry>
 <material name="field_1_1_material">
-<color rgba="0.737255 0.937255 0.917647 1.0"/>
+<color rgba="0.917647 0.917647 0.917647 1.0"/>
 </material>
 </visual>
 <collision>
 <geometry>
-<mesh filename="package://goalsally.stl"/>
+<mesh filename="package://penaltyopponent.stl"/>
 </geometry>
 <material name="field_1_1_material">
-<color rgba="0.737255 0.937255 0.917647 1.0"/>
+<color rgba="0.917647 0.917647 0.917647 1.0"/>
 </material>
 </collision>
 <inertial>
@@ -69,18 +69,18 @@
 <link name="field_1_2">
 <visual>
 <geometry>
-<mesh filename="package://field.stl"/>
+<mesh filename="package://goalsally.stl"/>
 </geometry>
 <material name="field_1_2_material">
-<color rgba="0.372549 0.654902 0.239216 1.0"/>
+<color rgba="0.737255 0.937255 0.917647 1.0"/>
 </material>
 </visual>
 <collision>
 <geometry>
-<mesh filename="package://field.stl"/>
+<mesh filename="package://goalsally.stl"/>
 </geometry>
 <material name="field_1_2_material">
-<color rgba="0.372549 0.654902 0.239216 1.0"/>
+<color rgba="0.737255 0.937255 0.917647 1.0"/>
 </material>
 </collision>
 <inertial>
@@ -99,18 +99,18 @@
 <link name="field_1_3">
 <visual>
 <geometry>
-<mesh filename="package://goalsopponentback.stl"/>
+<mesh filename="package://table2.stl"/>
 </geometry>
 <material name="field_1_3_material">
-<color rgba="0.458824 0.105882 0.000000 1.0"/>
+<color rgba="0.447059 0.243137 0.000000 1.0"/>
 </material>
 </visual>
 <collision>
 <geometry>
-<mesh filename="package://goalsopponentback.stl"/>
+<mesh filename="package://table2.stl"/>
 </geometry>
 <material name="field_1_3_material">
-<color rgba="0.458824 0.105882 0.000000 1.0"/>
+<color rgba="0.447059 0.243137 0.000000 1.0"/>
 </material>
 </collision>
 <inertial>
@@ -129,18 +129,18 @@
 <link name="field_1_4">
 <visual>
 <geometry>
-<mesh filename="package://goalsallyback.stl"/>
+<mesh filename="package://table3.stl"/>
 </geometry>
 <material name="field_1_4_material">
-<color rgba="0.000000 0.356863 0.329412 1.0"/>
+<color rgba="0.447059 0.243137 0.000000 1.0"/>
 </material>
 </visual>
 <collision>
 <geometry>
-<mesh filename="package://goalsallyback.stl"/>
+<mesh filename="package://table3.stl"/>
 </geometry>
 <material name="field_1_4_material">
-<color rgba="0.000000 0.356863 0.329412 1.0"/>
+<color rgba="0.447059 0.243137 0.000000 1.0"/>
 </material>
 </collision>
 <inertial>
@@ -159,18 +159,18 @@
 <link name="field_1_5">
 <visual>
 <geometry>
-<mesh filename="package://lines.stl"/>
+<mesh filename="package://goalsopponent.stl"/>
 </geometry>
 <material name="field_1_5_material">
-<color rgba="0.917647 0.917647 0.917647 1.0"/>
+<color rgba="0.882353 0.572549 0.478431 1.0"/>
 </material>
 </visual>
 <collision>
 <geometry>
-<mesh filename="package://lines.stl"/>
+<mesh filename="package://goalsopponent.stl"/>
 </geometry>
 <material name="field_1_5_material">
-<color rgba="0.917647 0.917647 0.917647 1.0"/>
+<color rgba="0.882353 0.572549 0.478431 1.0"/>
 </material>
 </collision>
 <inertial>
@@ -189,18 +189,18 @@
 <link name="field_1_6">
 <visual>
 <geometry>
-<mesh filename="package://goalsopponent.stl"/>
+<mesh filename="package://table.stl"/>
 </geometry>
 <material name="field_1_6_material">
-<color rgba="0.882353 0.572549 0.478431 1.0"/>
+<color rgba="0.447059 0.243137 0.000000 1.0"/>
 </material>
 </visual>
 <collision>
 <geometry>
-<mesh filename="package://goalsopponent.stl"/>
+<mesh filename="package://table.stl"/>
 </geometry>
 <material name="field_1_6_material">
-<color rgba="0.882353 0.572549 0.478431 1.0"/>
+<color rgba="0.447059 0.243137 0.000000 1.0"/>
 </material>
 </collision>
 <inertial>
@@ -219,18 +219,18 @@
 <link name="field_1_7">
 <visual>
 <geometry>
-<mesh filename="package://penaltyopponent.stl"/>
+<mesh filename="package://goalsallyback.stl"/>
 </geometry>
 <material name="field_1_7_material">
-<color rgba="0.917647 0.917647 0.917647 1.0"/>
+<color rgba="0.000000 0.356863 0.329412 1.0"/>
 </material>
 </visual>
 <collision>
 <geometry>
-<mesh filename="package://penaltyopponent.stl"/>
+<mesh filename="package://goalsallyback.stl"/>
 </geometry>
 <material name="field_1_7_material">
-<color rgba="0.917647 0.917647 0.917647 1.0"/>
+<color rgba="0.000000 0.356863 0.329412 1.0"/>
 </material>
 </collision>
 <inertial>
@@ -243,6 +243,126 @@
 <origin xyz="0.000000 0.000000 0.000000" rpy="0.000000 -0.000000 0.000000" />
 <parent link="field_1" />
 <child link="field_1_7" />
+<axis xyz="0 0 0"/>
+</joint>
+
+<link name="field_1_8">
+<visual>
+<geometry>
+<mesh filename="package://goalsopponentback.stl"/>
+</geometry>
+<material name="field_1_8_material">
+<color rgba="0.458824 0.105882 0.000000 1.0"/>
+</material>
+</visual>
+<collision>
+<geometry>
+<mesh filename="package://goalsopponentback.stl"/>
+</geometry>
+<material name="field_1_8_material">
+<color rgba="0.458824 0.105882 0.000000 1.0"/>
+</material>
+</collision>
+<inertial>
+<origin xyz="0.000000 0.000000 0.000000" rpy="0 0 0"/>
+<mass value="0.000000"/>
+<inertia ixx="0.000000" ixy="0.000000"  ixz="0.000000" iyy="0.000000" iyz="0.000000" izz="0.000000" />
+</inertial>
+</link>
+<joint name="field_1_field_1_8_fixing" type="fixed">
+<origin xyz="0.000000 0.000000 0.000000" rpy="0.000000 -0.000000 0.000000" />
+<parent link="field_1" />
+<child link="field_1_8" />
+<axis xyz="0 0 0"/>
+</joint>
+
+<link name="field_1_9">
+<visual>
+<geometry>
+<mesh filename="package://field.stl"/>
+</geometry>
+<material name="field_1_9_material">
+<color rgba="0.372549 0.654902 0.239216 1.0"/>
+</material>
+</visual>
+<collision>
+<geometry>
+<mesh filename="package://field.stl"/>
+</geometry>
+<material name="field_1_9_material">
+<color rgba="0.372549 0.654902 0.239216 1.0"/>
+</material>
+</collision>
+<inertial>
+<origin xyz="0.000000 0.000000 0.000000" rpy="0 0 0"/>
+<mass value="0.000000"/>
+<inertia ixx="0.000000" ixy="0.000000"  ixz="0.000000" iyy="0.000000" iyz="0.000000" izz="0.000000" />
+</inertial>
+</link>
+<joint name="field_1_field_1_9_fixing" type="fixed">
+<origin xyz="0.000000 0.000000 0.000000" rpy="0.000000 -0.000000 0.000000" />
+<parent link="field_1" />
+<child link="field_1_9" />
+<axis xyz="0 0 0"/>
+</joint>
+
+<link name="field_1_10">
+<visual>
+<geometry>
+<mesh filename="package://penaltyally.stl"/>
+</geometry>
+<material name="field_1_10_material">
+<color rgba="0.917647 0.917647 0.917647 1.0"/>
+</material>
+</visual>
+<collision>
+<geometry>
+<mesh filename="package://penaltyally.stl"/>
+</geometry>
+<material name="field_1_10_material">
+<color rgba="0.917647 0.917647 0.917647 1.0"/>
+</material>
+</collision>
+<inertial>
+<origin xyz="0.000000 0.000000 0.000000" rpy="0 0 0"/>
+<mass value="0.000000"/>
+<inertia ixx="0.000000" ixy="0.000000"  ixz="0.000000" iyy="0.000000" iyz="0.000000" izz="0.000000" />
+</inertial>
+</link>
+<joint name="field_1_field_1_10_fixing" type="fixed">
+<origin xyz="0.000000 0.000000 0.000000" rpy="0.000000 -0.000000 0.000000" />
+<parent link="field_1" />
+<child link="field_1_10" />
+<axis xyz="0 0 0"/>
+</joint>
+
+<link name="field_1_11">
+<visual>
+<geometry>
+<mesh filename="package://lines.stl"/>
+</geometry>
+<material name="field_1_11_material">
+<color rgba="0.917647 0.917647 0.917647 1.0"/>
+</material>
+</visual>
+<collision>
+<geometry>
+<mesh filename="package://lines.stl"/>
+</geometry>
+<material name="field_1_11_material">
+<color rgba="0.917647 0.917647 0.917647 1.0"/>
+</material>
+</collision>
+<inertial>
+<origin xyz="0.000000 0.000000 0.000000" rpy="0 0 0"/>
+<mass value="0.000000"/>
+<inertia ixx="0.000000" ixy="0.000000"  ixz="0.000000" iyy="0.000000" iyz="0.000000" izz="0.000000" />
+</inertial>
+</link>
+<joint name="field_1_field_1_11_fixing" type="fixed">
+<origin xyz="0.000000 0.000000 0.000000" rpy="0.000000 -0.000000 0.000000" />
+<parent link="field_1" />
+<child link="field_1_11" />
 <axis xyz="0 0 0"/>
 </joint>
 

@@ -15,6 +15,7 @@ class BulletViewer:
         self.vive = vive
         self.trackers = {}
         self.physics = False
+        p.resetDebugVisualizerCamera
 
         infos = vive.getTrackersInfos()
         for id in vive.trackers:
@@ -46,8 +47,15 @@ class BulletViewer:
             euler = convert_to_euler(orientation)
             orientation = p.getQuaternionFromEuler(euler)
 
-            if id == '4':
-                print("%f\t%f\t%f\t" % tuple(euler))
+            # fov, aspect, nearplane, farplane = 60, 1.0, 0.01, 100
+            # projection_matrix = p.computeProjectionMatrixFOV(fov, aspect, nearplane, farplane)
+            # tp = position.copy()
+            # tp[2] += 0.1
+            # view_matrix = p.computeViewMatrix(tp, tp+[-math.sin(euler[2]),math.cos(euler[2]),0], [0, 0, 1])
+            # img = p.getCameraImage(1000, 1000, view_matrix, projection_matrix)
+
+            # c = position.copy()
+            #  p.resetDebugVisualizerCamera(0.2, cameraYaw=euler[2]*180/math.pi, cameraPitch=-120+euler[0]*180.0/math.pi, ,cameraTargetPosition=c)
 
             p.resetBasePositionAndOrientation(self.trackers[id], position, orientation)
     
