@@ -24,11 +24,13 @@ set (PROTOBUF_MESSAGES
 
 protobuf_generate_cpp(PROTO_SOURCES PROTO_HEADERS ${PROTOBUF_MESSAGES})
 set_source_files_properties(${PROTO_SOURCES} ${PROTO_HEADERS} PROPERTIES GENERATED TRUE)
-add_custom_target(${PROJECT_NAME}_generate_cpp_headers ALL
+set(PROTO_DUMMY_FILE proto_generation)
+add_custom_command(
+  OUTPUT ${PROTO_DUMMY_FILE}
   COMMAND cp ${PROTO_HEADERS} ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+  COMMAND touch ${PROTO_DUMMY_FILE}
   DEPENDS ${PROTO_HEADERS}
   )
-set(${PROJECT_NAME}_EXPORTED_TARGETS ${PROJECT_NAME}_generate_cpp_headers)
 
 set(DELEGATE_INCLUDE_DIRS
   include
@@ -60,7 +62,7 @@ endforeach (DIRECTORY)
 
 set(LINKED_LIBRARIES ${PROTOBUF_LIBRARIES} ${catkin_LIBRARIES})
 
-add_library (${PROJECT_NAME} SHARED ${ALL_SOURCES} ${PROTO_SOURCES})
+add_library (${PROJECT_NAME} SHARED ${ALL_SOURCES} ${PROTO_SOURCES} ${PROTO_DUMMY_FILE})
 target_link_libraries(${PROJECT_NAME} ${LINKED_LIBRARIES})
 
 add_executable(log_manager tools/log_manager.cpp)
