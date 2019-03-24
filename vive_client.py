@@ -19,4 +19,5 @@ while True:
     print("\ttrackers: {}.format(nb_trackers)")
     for i in range(nb_trackers):
         print("\t\tidx: {}".format(pb_msg.trackers[i].tracker_idx))
+        print("\t\tidx: {}".format(pb_msg.trackers[i].tracker_idx))
     

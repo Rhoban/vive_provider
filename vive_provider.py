@@ -4,14 +4,21 @@ import time
 import openvr
 import math
 import sys
+import json
 import numpy as np
 from utils import *
 import  numpy.linalg as linalg
+import os
 
 class Calib:
-    def __init__(self, positions, halfField):
-        self.positions = positions
-        self.halfField = halfField
+    def __init__(self, calibFilePath):
+        if os.path.exists(calibFilePath):
+            with open(calibFilePath, "r") as calibFile:
+                self.calibration = json.loads(calibFile.read())
+        else:
+            print("Calibration file not found")
+            print("Exiting ...")
+            sys.exit()
 
         self.t = np.mat([])
         self.R = np.mat([])
@@ -19,18 +26,11 @@ class Calib:
 
     def computeTranslationAndRotation(self):
         field_positions = []
-        if(self.halfField):
-            field_positions = [[-4.5, 3, 0],
-                               [-4.5, -3, 0],
-                               [0, 3, 0]]
-        else:
-            field_positions = [[-4.5, 3, 0],
-                               [-4.5, -3, 0],
-                               [4.5, -3, 0]]
-        
-        positions = [self.positions[0],
-                     self.positions[1],
-                     self.positions[2]]
+        positions = []
+
+        for entry in self.calibration:
+            field_positions.append(entry['field'])
+            positions.append(entry['vive'])
         
         R, t = rigid_transform_3D(np.mat(positions), np.mat(field_positions))
 
@@ -43,22 +43,29 @@ class Calib:
         m = np.vstack((m, [0, 0, 0, 1]))
         
         return m
+
+class Tracker:
+
+    def __init__(self, serial_number, device_type, openvr_id):
+        self.serial_number = serial_number
+        self.device_type = device_type
+        self.openvr_id = openvr_id
         
 
+    
 class Vive_provider:
     
-    def __init__(self, calibFile="calibFile.txt"):
+    def __init__(self, enableButtons=False, calibFilePath="calibFile.json"):
+        
         self.vr = openvr.init(openvr.VRApplication_Other)
         self.trackers = {}
         self.lastInfos = {}
+        self.enableButtons = enableButtons
         
-        with open("calibFile.txt", "r") as c:
-            cc = eval(c.read())
-            self.calib = Calib(cc["positions"], cc["halfField"])
+        self.calib = Calib(calibFilePath)
             
         self.scanTrackers()
-        
-        
+
     def scanTrackers(self):
         
         poses = self.vr.getDeviceToAbsoluteTrackingPose(openvr.TrackingUniverseStanding, 0, openvr.k_unMaxTrackedDeviceCount)
@@ -69,54 +76,20 @@ class Vive_provider:
                 continue
             if not pose.bPoseIsValid:
                 continue
+            
             device_class = openvr.VRSystem().getTrackedDeviceClass(i)
 
             if(device_class == openvr.TrackedDeviceClass_GenericTracker or device_class == openvr.TrackedDeviceClass_Controller):
                 serial_number = openvr.VRSystem().getStringTrackedDeviceProperty(i, openvr.Prop_SerialNumber_String)
-
-                ids[str(i)] = {}
-                ids[str(i)]["serial_number"] = serial_number
-                if device_class == openvr.TrackedDeviceClass_Controller: 
-                    ids[str(i)]["device_type"] = "controller"        
+                if device_class == openvr.TrackedDeviceClass_Controller:
+                    device_type = "controller"
                 else:
-                    ids[str(i)]["device_type"] = "tracker"
+                    device_type = "tracker"
+                    
+                t = Tracker(serial_number, device_type, i)
                 
-        print(ids)
-        self.trackers = ids    
-
-    # Returns dictionary :
-    #
-    # {
-    #    vive_timestamp   : <>,
-    #    time_since_epoch : <>,
-    #    tracker_1 {
-    #       pose                        : <>,
-    #       velocity                    : <>,
-    #       angularVelocity             : <>,
-    #       vive_timestamp_last_tracked : <>,
-    #       time_since_last_tracked     : <>
-    #    },
-    #    tracker_2 {
-    #       pose                        : <>,
-    #       velocity                    : <>,
-    #       angularVelocity             : <>,
-    #       vive_timestamp_last_tracked : <>,
-    #       time_since_last_tracked     : <>
-    #    },
-    # ...
-    # }    
-    
-    def getControllersInfos(self, raw=False):
-        controllers = []
-        trackers = self.getTrackersInfos(raw)
-
-        for id in self.trackers:
-            name = 'tracker_'+str(id)
-            if trackers[name]['device_type'] == 'controller':
-                controllers.append(trackers[name])
-
-        return controllers
-
+                self.trackers[str(serial_number)] = t
+                
     def getTrackersInfos(self, raw=False):
         
         pose = self.vr.getDeviceToAbsoluteTrackingPose(openvr.TrackingUniverseStanding, 0, openvr.k_unMaxTrackedDeviceCount)
@@ -125,56 +98,73 @@ class Vive_provider:
         ret['vive_timestamp'] = int(time.perf_counter()*1000000)
         ret['time_since_epoch'] = int(time.time()*1000000)
 
-        for t in self.trackers:
-            id = int(t[0])
-            trackerDict = {}
-
-            ppose = convert_to_quaternion(pose[id].mDeviceToAbsoluteTracking)
-
-            p = pose[id].mDeviceToAbsoluteTracking
+        trackersDict = {}
+        
+        for t in self.trackers.values():
+            currentTrackerDict = {}
+            
+            currentTracker = pose[t.openvr_id]
+            
+            p = currentTracker.mDeviceToAbsoluteTracking
             m = np.matrix([list(p[0]), list(p[1]), list(p[2])])
             m = np.vstack((m, [0, 0, 0, 1]))
             corrected = m
-            
+
             if not raw:
-                Rz = np.matrix([
-                    [math.cos(math.pi/2), -math.sin(math.pi/2), 0, 0],
-                    [math.sin(math.pi/2), math.cos(math.pi/2), 0, 0],
-                    [0, 0, 1, 0],
-                    [0, 0, 0, 1]])
-                m = m*Rz
+                if t.device_type == 'tracker':
+                    Rz = np.matrix([
+                        [math.cos(math.pi/2), -math.sin(math.pi/2), 0, 0],
+                        [math.sin(math.pi/2), math.cos(math.pi/2), 0, 0],
+                        [0, 0, 1, 0],
+                        [0, 0, 0, 1]])
+                    m = m*Rz
                 corrected = self.calib.get_transformation_matrix()*m
+
+            if t.device_type == 'controller':
+                T = np.matrix([
+                    [1, 0, 0, 0],
+                    [0, 1, 0, -0.025],
+                    [0, 0, 1, -0.025],
+                    [0, 0, 0, 1]])
+                corrected = corrected*T
+
+            currentTrackerDict['openvr_id'] = t.openvr_id
+            currentTrackerDict['serial_number'] = t.serial_number
+            currentTrackerDict['device_type'] = t.device_type
+            currentTrackerDict['pose'] = convert_to_quaternion(np.array(corrected[:3, :4]))
+            currentTrackerDict['pose_matrix'] = corrected
+            currentTrackerDict['velocity'] = [currentTracker.vVelocity[0], currentTracker.vVelocity[1], currentTracker.vVelocity[2]]
+            currentTrackerDict['angular_velocity'] = [currentTracker.vAngularVelocity[0], currentTracker.vAngularVelocity[1], currentTracker.vAngularVelocity[2]]
             
-            trackerDict['pose'] = convert_to_quaternion(np.array(corrected[:3, :4]))
-            trackerDict['pose_matrix'] = corrected
-            trackerDict['velocity'] = [pose[id].vVelocity[0], pose[id].vVelocity[1], pose[id].vVelocity[2]]
-            trackerDict['angularVelocity'] = [pose[id].vAngularVelocity[0], pose[id].vAngularVelocity[1], pose[id].vAngularVelocity[2]]
-            
-            if(pose[id].bPoseIsValid or not self.lastInfos): # if first iteration, lastInfos is empty
-                trackerDict['vive_timestamp_last_tracked'] = ret['vive_timestamp']
-                trackerDict['time_since_last_tracked'] = 0
+            if(currentTracker.bPoseIsValid or not self.lastInfos): # if first iteration, lastInfos is empty
+                currentTrackerDict['vive_timestamp_last_tracked'] = ret['vive_timestamp']
+                currentTrackerDict['time_since_last_tracked'] = 0
             else:
-                trackerDict['vive_timestamp_last_tracked'] = self.lastInfos["tracker_"+str(id)]['vive_timestamp_last_tracked']
-                trackerDict['time_since_last_tracked'] = ret['vive_timestamp'] - self.lastInfos["tracker_"+str(id)]['vive_timestamp_last_tracked']
+                currentTrackerDict['vive_timestamp_last_tracked'] = self.lastInfos["trackers"][str(t.serial_number)]['vive_timestamp_last_tracked']
+                currentTrackerDict['time_since_last_tracked'] = ret['vive_timestamp'] - self.lastInfos['trackers'][str(t.serial_number)]['vive_timestamp_last_tracked']
 
-            # trackerDict['serialNumber'] = t[1]
-            trackerDict['serial_number'] = "TODO"
-            trackerDict['device_type'] = self.trackers[str(t)]['device_type']
-            # trackerDict['button_state'] = self.trackers[str(t)]['device_type']
+            if self.enableButtons:
+                if currentTrackerDict['device_type'] == 'controller':
+                    _, state = self.vr.getControllerState(t.openvr_id)
+                    currentTrackerDict['buttonPressed'] = (state.ulButtonPressed != 0)
 
-            # if trackerDict['device_type'] == 'controller':
-            #     _, state = self.vr.getControllerState(id)
-            #     trackerDict['buttonPressed'] = (state.ulButtonPressed != 0)
-            # print(self.vr.getControllerState(t))
-# self.vr.getDeviceToAbsoluteTrackingPose(openvr.TrackingUniverseStanding, 0, openvr.k_unMaxTrackedDeviceCount)z
             
+            trackersDict[str(t.serial_number)] = currentTrackerDict
                 
-            ret["tracker_"+str(id)] = trackerDict
+        ret["trackers"] = trackersDict             
 
         self.lastInfos = ret.copy()
             
         return ret
 
+    
+    def getControllersInfos(self, raw=False):
+        controllers = []
+        trackers = self.getTrackersInfos(raw)['trackers']
 
+        for t in self.trackers.values():
+            if(str(t.device_type) == "controller"):
+                controllers.append(trackers[str(t.serial_number)])
 
-
+        return controllers
+                
