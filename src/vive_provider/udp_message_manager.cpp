@@ -129,11 +129,15 @@ GlobalMsg UDPMessageManager::getMessage(uint64_t time_stamp, bool system_clock) 
   return it->second;
 }
 
-uint64_t UDPMessageManager::getStart() const {
+uint64_t UDPMessageManager::getStart(bool system_clock) const {
   if (messages.size() == 0) {
     return 0;
   }
-  return messages.begin()->first;
+  uint64_t start = messages.begin()->first;
+  if (system_clock) {
+    start += clock_offset;
+  }
+  return start;
 }
 
 void UDPMessageManager::autoUpdateOffset() {

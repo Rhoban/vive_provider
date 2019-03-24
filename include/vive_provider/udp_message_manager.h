@@ -54,6 +54,7 @@ public:
 
   /**
    * Return time_stamp of the first entry. If empty, returns 0.
+   * If system_clock is true, then return the start in global referential
    */
   uint64_t getStart(bool system_clock = false) const;
 
