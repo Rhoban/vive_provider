@@ -4,6 +4,7 @@ import time
 import openvr
 import math
 import sys
+import zmq
 import json
 import numpy as np
 from utils import *
@@ -88,9 +89,13 @@ class Vive_provider:
             self.vr = None
             self.calib = None
             
-            self.client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
-            self.client.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-            self.client.bind(("", 37020))
+            self.context = zmq.Context()
+            self.client = self.context.socket(zmq.SUB)
+            self.client.connect('tcp://10.2.11.68:4040')
+            self.client.setsockopt(zmq.SUBSCRIBE, b'')
+            # self.client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
+            # self.client.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+            # self.client.bind(("", 37020))
 
         self.scanTrackers()            
             
@@ -99,7 +104,7 @@ class Vive_provider:
 
         if self.clientMode :
             pb_msg = GlobalMsg()
-            data, addr = self.client.recvfrom(1024)
+            data = self.client.recv()
             pb_msg.ParseFromString(data)
             infos= GlobalMsg_to_trackersInfos(data)
 
@@ -138,7 +143,8 @@ class Vive_provider:
         
         if self.clientMode:
             pb_msg = GlobalMsg()
-            data, addr = self.client.recvfrom(1024)
+            # data, addr = self.client.recvfrom(1024)
+            data = self.client.recv()
             pb_msg.ParseFromString(data)
             return GlobalMsg_to_trackersInfos(data)
             
