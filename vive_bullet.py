@@ -68,10 +68,6 @@ class BulletViewer:
             #  p.resetDebugVisualizerCamera(0.2, cameraYaw=euler[2]*180/math.pi, cameraPitch=-120+euler[0]*180.0/math.pi, ,cameraTargetPosition=c)
 
             # print(position)
-            newId = p.addUserDebugText(id, position)
-            if id in self.texts:
-                p.removeUserDebugItem(self.texts[id])
-            self.texts[id] = newId
             p.resetBasePositionAndOrientation(self.trackers[id], position, orientation)
         
         for id in self.vive.references:
@@ -81,10 +77,8 @@ class BulletViewer:
             euler = convert_to_euler(orientation)
             orientation = p.getQuaternionFromEuler(euler)
 
-            newId = p.addUserDebugText(id, position)
-            if id in self.texts:
-                p.removeUserDebugItem(self.texts[id])
-            self.texts[id] = newId
+            if id not in self.texts:
+                self.texts[id] = p.addUserDebugText(id, position)
             p.resetBasePositionAndOrientation(self.references[id], position, orientation)
 
     
