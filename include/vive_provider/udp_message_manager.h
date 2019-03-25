@@ -59,9 +59,20 @@ public:
   uint64_t getStart(bool system_clock = false) const;
 
   /**
+   * Return time_stamp of the last entry. If empty, returns 0.
+   * If system_clock is true, then return the start in global referential
+   */
+  uint64_t getLast(bool system_clock = false) const;
+
+  /**
    * Uses first vive message to compute clock offset
    */
   void autoUpdateOffset();
+
+  /**
+   * Update the clock offset between vive_steady clock and system_clock
+   */
+  void setOffset(int64_t new_offset);
 
   /**
    * Get the offset in microseconds between steady_clock of vive and system_clock of vive_server
