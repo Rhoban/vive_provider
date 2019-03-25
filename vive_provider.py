@@ -12,18 +12,22 @@ import os
 
 class Calib:
     def __init__(self, calibFilePath):
+        self.calibration = None
         loaded = False
         if os.path.exists(calibFilePath):
             with open(calibFilePath, "r") as calibFile:
                 self.calibration = json.loads(calibFile.read())
                 loaded = True
+            for id in self.calibration:
+                self.calibration[id] = np.mat(self.calibration[id])
         else:
             print("! WARNING: Calibration file not found")
 
-        for id in self.calibration:
-            self.calibration[id] = np.mat(self.calibration[id])
 
     def transform_frame(self, references, trackerToWorld):
+        if self.calibration is None:
+            return trackerToWorld
+
         # return self.calibration['worldToField']*trackerToWorld
 
         for id in references:
@@ -36,7 +40,8 @@ class Calib:
                 # print(str(id)+' '+str(trackerToReference))
                 return trackerToField
         
-        print('Cant find a suitable reference!')
+        print('! ERROR: Cant find a suitable reference!')
+        exit()
 
 class Tracker:
 
@@ -74,7 +79,7 @@ class Vive_provider:
                 continue
             
             device_class = openvr.VRSystem().getTrackedDeviceClass(i)
-            serial_number = openvr.VRSystem().getStringTrackedDeviceProperty(i, openvr.Prop_SerialNumber_String)
+            serial_number = openvr.VRSystem().getStringTrackedDeviceProperty(i, openvr.Prop_SerialNumber_String).decode('UTF-8')
 
             if(device_class == openvr.TrackedDeviceClass_GenericTracker or device_class == openvr.TrackedDeviceClass_Controller):
                 if device_class == openvr.TrackedDeviceClass_Controller:
