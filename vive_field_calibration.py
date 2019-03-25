@@ -28,6 +28,7 @@ positions = []
 while failed:
     failed = False
     positions = []
+    references = {}
     for field_position in field_positions:
         print('Place tracker on position '+str(field_position)+', then press the button ')
         viewer.setUrdfPosition(target, field_position)
@@ -45,6 +46,18 @@ while failed:
         position = pose[:3]
 
         hasError = False
+        # Checking references
+        infos = vp.getTrackersInfos(raw=True)
+        for reference in infos['references']:
+            matrix = infos['references'][reference]
+            if reference in references:
+                if not np.allclose(references[reference], matrix):
+                    print('! ERROR: References has moved!')
+                    hasError = True
+            else:
+                references[reference] = matrix
+
+        # Checking points distances consistency
         for k in range(len(positions)):
             other_field_position = field_positions[k]
             other_position = positions[k]
@@ -72,9 +85,8 @@ worldToField = np.vstack((worldToField, [0, 0, 0, 1]))
 # XXX: References should be built all along the script
 data = {}
 data['worldToField'] = worldToField.tolist()
-infos = vp.getTrackersInfos(raw=True)
-for reference in infos['references']:
-    referenceToWorld = infos['references'][reference]
+for reference in references:
+    referenceToWorld = references[reference]
     fieldToReference = np.linalg.inv(worldToField*referenceToWorld).tolist()
     data[reference] = fieldToReference
 
