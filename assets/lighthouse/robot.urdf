@@ -9,18 +9,18 @@
 <link name="arrow_1_0">
 <visual>
 <geometry>
-<mesh filename="package://box.stl"/>
+<mesh filename="package://arrow.stl"/>
 </geometry>
 <material name="arrow_1_0_material">
-<color rgba="0.400000 0.400000 0.400000 1.0"/>
+<color rgba="0.086275 0.321569 0.580392 1.0"/>
 </material>
 </visual>
 <collision>
 <geometry>
-<mesh filename="package://box.stl"/>
+<mesh filename="package://arrow.stl"/>
 </geometry>
 <material name="arrow_1_0_material">
-<color rgba="0.400000 0.400000 0.400000 1.0"/>
+<color rgba="0.086275 0.321569 0.580392 1.0"/>
 </material>
 </collision>
 <inertial>
@@ -39,18 +39,18 @@
 <link name="arrow_1_1">
 <visual>
 <geometry>
-<mesh filename="package://arrow.stl"/>
+<mesh filename="package://box.stl"/>
 </geometry>
 <material name="arrow_1_1_material">
-<color rgba="0.866667 0.321569 0.156863 1.0"/>
+<color rgba="0.400000 0.400000 0.400000 1.0"/>
 </material>
 </visual>
 <collision>
 <geometry>
-<mesh filename="package://arrow.stl"/>
+<mesh filename="package://box.stl"/>
 </geometry>
 <material name="arrow_1_1_material">
-<color rgba="0.866667 0.321569 0.156863 1.0"/>
+<color rgba="0.400000 0.400000 0.400000 1.0"/>
 </material>
 </collision>
 <inertial>
