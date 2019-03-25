@@ -36,12 +36,13 @@ def convert_to_quaternion(pose_mat):
     z = pose_mat[2][3]
     return [x,y,z,r_w,r_x,r_y,r_z]
 
-def trackersInfos_to_GlobalMsg(trackersInfos):
+def trackersInfos_to_GlobalMsg(trackersInfos, seq):
     pb_msg = GlobalMsg()
 
     
     pb_msg.vive_timestamp = trackersInfos['vive_timestamp']
     pb_msg.time_since_epoch = trackersInfos['time_since_epoch']
+    pb_msg.seq = seq
 
     trackers = trackersInfos["trackers"]
     # print(trackers)
@@ -92,6 +93,7 @@ def GlobalMsg_to_trackersInfos(data):
     ret = {}
     ret['vive_timestamp'] = pb_msg.vive_timestamp
     ret['time_since_epoch'] = pb_msg.time_since_epoch
+    ret['seq'] = pb_msg.seq
 
     trackersDict = {}
     for i in range(0, nbTrackers):
