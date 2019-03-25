@@ -84,9 +84,9 @@ class Vive_provider:
                     
                 t = Tracker(serial_number, device_type, i)
                 
-                self.trackers[str(serial_number)] = t
+                self.trackers[serial_number] = t
             elif device_class == openvr.TrackedDeviceClass_TrackingReference:
-                self.references[str(serial_number)] = i
+                self.references[serial_number] = i
                 
     def getTrackersInfos(self, raw=False):
         
@@ -154,8 +154,8 @@ class Vive_provider:
                 currentTrackerDict['vive_timestamp_last_tracked'] = ret['vive_timestamp']
                 currentTrackerDict['time_since_last_tracked'] = 0
             else:
-                currentTrackerDict['vive_timestamp_last_tracked'] = self.lastInfos["trackers"][str(t.serial_number)]['vive_timestamp_last_tracked']
-                currentTrackerDict['time_since_last_tracked'] = ret['vive_timestamp'] - self.lastInfos['trackers'][str(t.serial_number)]['vive_timestamp_last_tracked']
+                currentTrackerDict['vive_timestamp_last_tracked'] = self.lastInfos["trackers"][t.serial_number]['vive_timestamp_last_tracked']
+                currentTrackerDict['time_since_last_tracked'] = ret['vive_timestamp'] - self.lastInfos['trackers'][t.serial_number]['vive_timestamp_last_tracked']
 
             if self.enableButtons:
                 if currentTrackerDict['device_type'] == 'controller':
@@ -163,7 +163,7 @@ class Vive_provider:
                     currentTrackerDict['buttonPressed'] = (state.ulButtonPressed != 0)
 
             
-            trackersDict[str(t.serial_number)] = currentTrackerDict
+            trackersDict[t.serial_number] = currentTrackerDict
                      
         ret["trackers"] = trackersDict
 
@@ -177,6 +177,11 @@ class Vive_provider:
             
         return ret
 
+    def vibrate(self, serial, duration=250):
+        openvr_id = self.trackers[serial].openvr_id
+        for x in range(duration): 
+            self.vr.triggerHapticPulse(openvr_id, 0, 5000)
+            time.sleep(0.001) 
     
     def getControllersInfos(self, raw=False):
         controllers = []
@@ -184,7 +189,7 @@ class Vive_provider:
 
         for t in self.trackers.values():
             if(str(t.device_type) == "controller"):
-                controllers.append(trackers[str(t.serial_number)])
+                controllers.append(trackers[t.serial_number])
 
         return controllers
                 
