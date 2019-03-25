@@ -26,7 +26,7 @@ Eigen::Affine3d getWorldToTracker(const TrackerMsg & tracker)
   }
   Eigen::Vector3d pos = getPos(tracker.pos());
   Eigen::Quaterniond q = getQuaternion(tracker.orientation());
-  return Eigen::Translation3d(pos) * Eigen::Affine3d(q);
+  return Eigen::Affine3d(q) * Eigen::Translation3d(-pos);
   
 }
 
