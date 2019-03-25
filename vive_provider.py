@@ -9,6 +9,8 @@ import numpy as np
 from utils import *
 import  numpy.linalg as linalg
 import os
+from vive_pb2 import *
+import socket
 
 class Calib:
     def __init__(self, calibFilePath):
@@ -44,6 +46,9 @@ class Calib:
         exit()
 
     def check_consistency(self, references):
+
+        if self.calibration is None:
+            return
         keys = list(references.keys())
         for i in range(len(keys)):
             for j in range(i+1, len(keys)):
@@ -68,19 +73,41 @@ class Tracker:
     
 class Vive_provider:
     
-    def __init__(self, enableButtons=False, calibFilePath="calibFile.json"):
+    def __init__(self, enableButtons=False, calibFilePath="calibFile.json", clientMode=False):
+        self.clientMode = clientMode
         
-        self.vr = openvr.init(openvr.VRApplication_Other)
         self.trackers = {}
         self.references = {}
         self.lastInfos = {}
         self.enableButtons = enableButtons
         
-        self.calib = Calib(calibFilePath)
+        if(not self.clientMode):
+            self.vr = openvr.init(openvr.VRApplication_Other)
+            self.calib = Calib(calibFilePath)
+        else:
+            self.vr = None
+            self.calib = None
             
-        self.scanTrackers()
+            self.client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
+            self.client.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+            self.client.bind(("", 37020))
+
+        self.scanTrackers()            
+            
 
     def scanTrackers(self):
+
+        if self.clientMode :
+            pb_msg = GlobalMsg()
+            data, addr = self.client.recvfrom(1024)
+            pb_msg.ParseFromString(data)
+            infos= GlobalMsg_to_trackersInfos(data)
+
+            for t in infos['trackers'].values():
+                self.trackers[t['serial_number']] = t['openvr_id']
+
+            return
+            
         
         poses = self.vr.getDeviceToAbsoluteTrackingPose(openvr.TrackingUniverseStanding, 0, openvr.k_unMaxTrackedDeviceCount)
         ids = {}
@@ -108,6 +135,14 @@ class Vive_provider:
                 self.references[serial_number] = i
                 
     def getTrackersInfos(self, raw=False):
+        
+        if self.clientMode:
+            pb_msg = GlobalMsg()
+            data, addr = self.client.recvfrom(1024)
+            pb_msg.ParseFromString(data)
+            return GlobalMsg_to_trackersInfos(data)
+            
+
         
         pose = self.vr.getDeviceToAbsoluteTrackingPose(openvr.TrackingUniverseStanding, 0, openvr.k_unMaxTrackedDeviceCount)
         ret = {}

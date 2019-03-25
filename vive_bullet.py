@@ -21,21 +21,22 @@ class BulletViewer:
 
         p.resetDebugVisualizerCamera
 
-        infos = vive.getTrackersInfos()
+        infos = self.vive.getTrackersInfos()
 
-        for id in vive.trackers:
-            tracker = vive.trackers[id]
+        for id in self.vive.trackers:
+            tracker = self.vive.trackers[id]
             info = infos['trackers'][id]
             startOrientation = p.getQuaternionFromEuler([0, 0, 0])
             startPos = [0, 0, 0]
             
             asset = 'assets/tracker.urdf'
+            # print(info)
             if info['device_type'] == 'controller':
                 asset = 'assets/controller.urdf'
             tracker = p.loadURDF(asset, startPos, startOrientation)
             self.trackers[id] = tracker
 
-        for id in vive.references:
+        for id in self.vive.references:
             reference = p.loadURDF('assets/lighthouse/robot.urdf', [0, 0, 0])
             self.references[id] = reference
     
@@ -47,7 +48,7 @@ class BulletViewer:
         p.resetBasePositionAndOrientation(urdf, position, orientation)
 
     def update(self):
-        infos = vive.getTrackersInfos()
+        infos = self.vive.getTrackersInfos()
 
         for id in self.vive.trackers:
             info = infos['trackers'][id]

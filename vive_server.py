@@ -20,6 +20,7 @@ pb_msg = GlobalMsg()
 while True:
 
     pb_msg.Clear()
+    # print(vp.getTrackersInfos())
     pb_msg = trackersInfos_to_GlobalMsg(vp.getTrackersInfos())
     # pb_msg = trackersInfos_to_GlobalMsg(get_dummy_trackerInfos())
     
