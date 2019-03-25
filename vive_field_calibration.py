@@ -7,22 +7,22 @@ from utils import rigid_transform_3D
 
 vp = Vive_provider(enableButtons=True)
 
-# Positions 
-field_positions = [
-    [-2.37, 0, 0],
-    [0, 3, 0],
-    [0, -3, 0]
-]
+# Loading field positions to use for calibration
+f = open('fieldPositions.json')
+field_positions = json.load(f)
+f.close()
         
-data = []
+# Creating bullet viewer and loading the field
 viewer = BulletViewer(vp)
 target = viewer.addUrdf('assets/target/robot.urdf')
 
+# Checking controller presence
 controllersInfos = vp.getControllersInfos(raw=True)
 if len(controllersInfos) != 1:
     print('ERROR: Calibration should have exactly one controller (found %d)' % len(controllersInfos))
     exit()
 
+# Loop to retrieve the points
 failed = True
 positions = []
 while failed:
@@ -82,7 +82,7 @@ worldToField = R.copy()
 worldToField = np.hstack((worldToField, t))
 worldToField = np.vstack((worldToField, [0, 0, 0, 1]))
 
-# XXX: References should be built all along the script
+# Adding field to reference to the calibration files
 data = {}
 data['worldToField'] = worldToField.tolist()
 for reference in references:
@@ -90,6 +90,7 @@ for reference in references:
     fieldToReference = np.linalg.inv(worldToField*referenceToWorld).tolist()
     data[reference] = fieldToReference
 
+# Writing the calibration file
 calibFile = open("calibFile.json", "w")
 calibFile.write(json.dumps(data))
 calibFile.close()
