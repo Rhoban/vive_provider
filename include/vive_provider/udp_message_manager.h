@@ -50,7 +50,7 @@ public:
    * Return the last entry before time_stamp.
    * If there are no entry before time_stamp, returns an empty entry.
    */
-  GlobalMsg getMessage(uint64_t time_stamp, bool system_clock = false);
+  GlobalMsg getMessage(uint64_t time_stamp, bool system_clock = false) const;
 
   /**
    * Return time_stamp of the first entry. If empty, returns 0.

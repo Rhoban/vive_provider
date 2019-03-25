@@ -136,7 +136,7 @@ void UDPMessageManager::loadMessages(const std::string& path)
   }
 }
 
-GlobalMsg UDPMessageManager::getMessage(uint64_t time_stamp, bool system_clock)
+GlobalMsg UDPMessageManager::getMessage(uint64_t time_stamp, bool system_clock) const
 {
   if (system_clock)
   {
