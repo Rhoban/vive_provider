@@ -43,6 +43,20 @@ class Calib:
         print('! ERROR: Cant find a suitable reference!')
         exit()
 
+    def check_consistency(self, references):
+        keys = list(references.keys())
+        for i in range(len(keys)):
+            for j in range(i+1, len(keys)):
+                keyA = keys[i]
+                keyB = keys[j]
+                if keyA in self.calibration and keyB in self.calibration:
+                    expectedTransformation = self.calibration[keyB] * np.linalg.inv(self.calibration[keyA])
+                    transformation = np.linalg.inv(references[keyB]) * references[keyA]
+
+                    if not np.allclose(expectedTransformation.T[3,:3], transformation.T[3,:3], atol=0.15) or \
+                        not np.allclose(expectedTransformation[:3,:3], transformation[:3,:3], atol=0.01):
+                        print('! ERROR: Transformation from %s to %s is not consistent with calibration' % (keyA, keyB))
+
 class Tracker:
 
     def __init__(self, serial_number, device_type, openvr_id):
@@ -178,6 +192,7 @@ class Vive_provider:
 
         ret["references_corrected"] = references_corrected
 
+        self.calib.check_consistency(references)
         self.lastInfos = ret.copy()
             
         return ret

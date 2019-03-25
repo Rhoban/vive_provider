@@ -17,6 +17,8 @@ class BulletViewer:
         self.trackers = {}
         self.references = {}
         self.physics = False
+        self.texts= {}
+
         p.resetDebugVisualizerCamera
 
         infos = vive.getTrackersInfos()
@@ -46,6 +48,7 @@ class BulletViewer:
 
     def update(self):
         infos = vive.getTrackersInfos()
+
         for id in self.vive.trackers:
             info = infos['trackers'][id]
             m = info['pose_matrix']
@@ -64,7 +67,11 @@ class BulletViewer:
             # c = position.copy()
             #  p.resetDebugVisualizerCamera(0.2, cameraYaw=euler[2]*180/math.pi, cameraPitch=-120+euler[0]*180.0/math.pi, ,cameraTargetPosition=c)
 
-            print(position)
+            # print(position)
+            newId = p.addUserDebugText(id, position)
+            if id in self.texts:
+                p.removeUserDebugItem(self.texts[id])
+            self.texts[id] = newId
             p.resetBasePositionAndOrientation(self.trackers[id], position, orientation)
         
         for id in self.vive.references:
@@ -74,6 +81,10 @@ class BulletViewer:
             euler = convert_to_euler(orientation)
             orientation = p.getQuaternionFromEuler(euler)
 
+            newId = p.addUserDebugText(id, position)
+            if id in self.texts:
+                p.removeUserDebugItem(self.texts[id])
+            self.texts[id] = newId
             p.resetBasePositionAndOrientation(self.references[id], position, orientation)
 
     
