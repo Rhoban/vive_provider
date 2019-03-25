@@ -1,6 +1,5 @@
 #!/usr/bin/env python
-
-import json
+import json, sys
 from vive_provider import *
 from vive_bullet import BulletViewer
 from utils import rigid_transform_3D
@@ -8,7 +7,10 @@ from utils import rigid_transform_3D
 vp = Vive_provider(enableButtons=True)
 
 # Loading field positions to use for calibration
-f = open('fieldPositions.json')
+fileName = 'fieldPositions.json'
+if len(sys.argv) > 1:
+    fileName = sys.argv[1]
+f = open(fileName, 'r')
 field_positions = json.load(f)
 f.close()
         
