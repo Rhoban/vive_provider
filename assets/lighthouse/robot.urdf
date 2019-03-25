@@ -1,0 +1,69 @@
+<robot name="onshape">
+<link name="arrow_1">
+<inertial>
+<origin xyz="0 0 0" rpy="0 0 0" />
+<mass value="0" />
+<inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0" />
+</inertial>
+</link>
+<link name="arrow_1_0">
+<visual>
+<geometry>
+<mesh filename="package://arrow.stl"/>
+</geometry>
+<material name="arrow_1_0_material">
+<color rgba="0.086275 0.321569 0.580392 1.0"/>
+</material>
+</visual>
+<collision>
+<geometry>
+<mesh filename="package://arrow.stl"/>
+</geometry>
+<material name="arrow_1_0_material">
+<color rgba="0.086275 0.321569 0.580392 1.0"/>
+</material>
+</collision>
+<inertial>
+<origin xyz="0.000000 0.000000 0.000000" rpy="0 0 0"/>
+<mass value="0.000000"/>
+<inertia ixx="0.000000" ixy="0.000000"  ixz="0.000000" iyy="0.000000" iyz="0.000000" izz="0.000000" />
+</inertial>
+</link>
+<joint name="arrow_1_arrow_1_0_fixing" type="fixed">
+<origin xyz="0.000000 0.000000 0.000000" rpy="0.000000 -0.000000 0.000000" />
+<parent link="arrow_1" />
+<child link="arrow_1_0" />
+<axis xyz="0 0 0"/>
+</joint>
+
+<link name="arrow_1_1">
+<visual>
+<geometry>
+<mesh filename="package://box.stl"/>
+</geometry>
+<material name="arrow_1_1_material">
+<color rgba="0.400000 0.400000 0.400000 1.0"/>
+</material>
+</visual>
+<collision>
+<geometry>
+<mesh filename="package://box.stl"/>
+</geometry>
+<material name="arrow_1_1_material">
+<color rgba="0.400000 0.400000 0.400000 1.0"/>
+</material>
+</collision>
+<inertial>
+<origin xyz="0.000000 0.000000 0.000000" rpy="0 0 0"/>
+<mass value="0.000000"/>
+<inertia ixx="0.000000" ixy="0.000000"  ixz="0.000000" iyy="0.000000" iyz="0.000000" izz="0.000000" />
+</inertial>
+</link>
+<joint name="arrow_1_arrow_1_1_fixing" type="fixed">
+<origin xyz="0.000000 0.000000 0.000000" rpy="0.000000 -0.000000 0.000000" />
+<parent link="arrow_1" />
+<child link="arrow_1_1" />
+<axis xyz="0 0 0"/>
+</joint>
+
+</robot>

@@ -1,0 +1,39 @@
+<robot name="onshape">
+<link name="ball_1">
+<inertial>
+<origin xyz="0 0 0" rpy="0 0 0" />
+<mass value="1e-9" />
+<inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0" />
+</inertial>
+</link>
+<link name="ball_1_0">
+<visual>
+<geometry>
+<mesh filename="package://ball.stl"/>
+</geometry>
+<material name="ball_1_0_material">
+<color rgba="0.917647 0.917647 0.917647 1.0"/>
+</material>
+</visual>
+<collision>
+<geometry>
+<mesh filename="package://ball.stl"/>
+</geometry>
+<material name="ball_1_0_material">
+<color rgba="0.917647 0.917647 0.917647 1.0"/>
+</material>
+</collision>
+<inertial>
+<origin xyz="-0.000000 0.000000 0.000000" rpy="0 0 0"/>
+<mass value="1.254674"/>
+<inertia ixx="0.002823" ixy="0.000000"  ixz="0.000000" iyy="0.002823" iyz="0.000000" izz="0.002823" />
+</inertial>
+</link>
+<joint name="ball_1_ball_1_0_fixing" type="fixed">
+<origin xyz="0.000000 0.000000 0.000000" rpy="0.000000 -0.000000 0.000000" />
+<parent link="ball_1" />
+<child link="ball_1_0" />
+<axis xyz="0 0 0"/>
+</joint>
+
+</robot>

@@ -9,40 +9,58 @@ import numpy as np
 from utils import *
 import  numpy.linalg as linalg
 import os
+from vive_pb2 import *
+import socket
 
 class Calib:
     def __init__(self, calibFilePath):
+        self.calibration = None
+        loaded = False
         if os.path.exists(calibFilePath):
             with open(calibFilePath, "r") as calibFile:
                 self.calibration = json.loads(calibFile.read())
+                loaded = True
+            for id in self.calibration:
+                self.calibration[id] = np.mat(self.calibration[id])
         else:
-            print("Calibration file not found")
-            print("Exiting ...")
-            sys.exit()
+            print("! WARNING: Calibration file not found")
 
-        self.t = np.mat([])
-        self.R = np.mat([])
-        self.computeTranslationAndRotation()
 
-    def computeTranslationAndRotation(self):
-        field_positions = []
-        positions = []
+    def transform_frame(self, references, trackerToWorld):
+        if self.calibration is None:
+            return trackerToWorld
 
-        for entry in self.calibration:
-            field_positions.append(entry['field'])
-            positions.append(entry['vive'])
+        # return self.calibration['worldToField']*trackerToWorld
+
+        for id in references:
+            if id in self.calibration:
+                referenceToWorld = references[id]
+                fieldToReference = self.calibration[id]
+
+                trackerToReference = np.linalg.inv(referenceToWorld)*trackerToWorld
+                trackerToField = np.linalg.inv(fieldToReference)*trackerToReference
+                # print(str(id)+' '+str(trackerToReference))
+                return trackerToField
         
-        R, t = rigid_transform_3D(np.mat(positions), np.mat(field_positions))
+        print('! ERROR: Cant find a suitable reference!')
+        exit()
 
-        self.t = t
-        self.R = R
+    def check_consistency(self, references):
 
-    def get_transformation_matrix(self):
-        m = self.R.copy()
-        m = np.hstack((m, self.t))
-        m = np.vstack((m, [0, 0, 0, 1]))
-        
-        return m
+        if self.calibration is None:
+            return
+        keys = list(references.keys())
+        for i in range(len(keys)):
+            for j in range(i+1, len(keys)):
+                keyA = keys[i]
+                keyB = keys[j]
+                if keyA in self.calibration and keyB in self.calibration:
+                    expectedTransformation = self.calibration[keyB] * np.linalg.inv(self.calibration[keyA])
+                    transformation = np.linalg.inv(references[keyB]) * references[keyA]
+
+                    if not np.allclose(expectedTransformation.T[3,:3], transformation.T[3,:3], atol=0.15) or \
+                        not np.allclose(expectedTransformation[:3,:3], transformation[:3,:3], atol=0.01):
+                        print('! ERROR: Transformation from %s to %s is not consistent with calibration' % (keyA, keyB))
 
 class Tracker:
 
@@ -55,21 +73,45 @@ class Tracker:
     
 class Vive_provider:
     
-    def __init__(self, enableButtons=False, calibFilePath="calibFile.json"):
+    def __init__(self, enableButtons=False, calibFilePath="calibFile.json", clientMode=False):
+        self.clientMode = clientMode
         
-        self.vr = openvr.init(openvr.VRApplication_Other)
         self.trackers = {}
+        self.references = {}
         self.lastInfos = {}
         self.enableButtons = enableButtons
         
-        self.calib = Calib(calibFilePath)
+        if(not self.clientMode):
+            self.vr = openvr.init(openvr.VRApplication_Other)
+            self.calib = Calib(calibFilePath)
+        else:
+            self.vr = None
+            self.calib = None
             
-        self.scanTrackers()
+            self.client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
+            self.client.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+            self.client.bind(("", 37020))
+
+        self.scanTrackers()            
+            
 
     def scanTrackers(self):
+
+        if self.clientMode :
+            pb_msg = GlobalMsg()
+            data, addr = self.client.recvfrom(1024)
+            pb_msg.ParseFromString(data)
+            infos= GlobalMsg_to_trackersInfos(data)
+
+            for t in infos['trackers'].values():
+                self.trackers[t['serial_number']] = t['openvr_id']
+
+            return
+            
         
         poses = self.vr.getDeviceToAbsoluteTrackingPose(openvr.TrackingUniverseStanding, 0, openvr.k_unMaxTrackedDeviceCount)
         ids = {}
+        
         for i in range(1, openvr.k_unMaxTrackedDeviceCount):
             pose = poses[i]
             if not pose.bDeviceIsConnected:
@@ -78,9 +120,9 @@ class Vive_provider:
                 continue
             
             device_class = openvr.VRSystem().getTrackedDeviceClass(i)
+            serial_number = openvr.VRSystem().getStringTrackedDeviceProperty(i, openvr.Prop_SerialNumber_String).decode('UTF-8')
 
             if(device_class == openvr.TrackedDeviceClass_GenericTracker or device_class == openvr.TrackedDeviceClass_Controller):
-                serial_number = openvr.VRSystem().getStringTrackedDeviceProperty(i, openvr.Prop_SerialNumber_String)
                 if device_class == openvr.TrackedDeviceClass_Controller:
                     device_type = "controller"
                 else:
@@ -88,9 +130,19 @@ class Vive_provider:
                     
                 t = Tracker(serial_number, device_type, i)
                 
-                self.trackers[str(serial_number)] = t
+                self.trackers[serial_number] = t
+            elif device_class == openvr.TrackedDeviceClass_TrackingReference:
+                self.references[serial_number] = i
                 
     def getTrackersInfos(self, raw=False):
+        
+        if self.clientMode:
+            pb_msg = GlobalMsg()
+            data, addr = self.client.recvfrom(1024)
+            pb_msg.ParseFromString(data)
+            return GlobalMsg_to_trackersInfos(data)
+            
+
         
         pose = self.vr.getDeviceToAbsoluteTrackingPose(openvr.TrackingUniverseStanding, 0, openvr.k_unMaxTrackedDeviceCount)
         ret = {}
@@ -98,13 +150,29 @@ class Vive_provider:
         ret['vive_timestamp'] = int(time.perf_counter()*1000000)
         ret['time_since_epoch'] = int(time.time()*1000000)
 
+        references = {}
+        for r in self.references:
+            openvr_id = self.references[r]
+            currentTracker = pose[openvr_id]
+    
+            p = currentTracker.mDeviceToAbsoluteTracking
+            m = np.matrix([list(p[0]), list(p[1]), list(p[2])])
+            m = np.vstack((m, [0, 0, 0, 1]))
+            corrected = m
+
+            # if not raw:
+            #     corrected = self.calib.get_transformation_matrix()*m
+
+            references[r] = corrected
+        ret["references"] = references
+
         trackersDict = {}
         
         for t in self.trackers.values():
             currentTrackerDict = {}
             
             currentTracker = pose[t.openvr_id]
-            
+    
             p = currentTracker.mDeviceToAbsoluteTracking
             m = np.matrix([list(p[0]), list(p[1]), list(p[2])])
             m = np.vstack((m, [0, 0, 0, 1]))
@@ -118,7 +186,7 @@ class Vive_provider:
                         [0, 0, 1, 0],
                         [0, 0, 0, 1]])
                     m = m*Rz
-                corrected = self.calib.get_transformation_matrix()*m
+                corrected = self.calib.transform_frame(references, m)
 
             if t.device_type == 'controller':
                 T = np.matrix([
@@ -140,8 +208,8 @@ class Vive_provider:
                 currentTrackerDict['vive_timestamp_last_tracked'] = ret['vive_timestamp']
                 currentTrackerDict['time_since_last_tracked'] = 0
             else:
-                currentTrackerDict['vive_timestamp_last_tracked'] = self.lastInfos["trackers"][str(t.serial_number)]['vive_timestamp_last_tracked']
-                currentTrackerDict['time_since_last_tracked'] = ret['vive_timestamp'] - self.lastInfos['trackers'][str(t.serial_number)]['vive_timestamp_last_tracked']
+                currentTrackerDict['vive_timestamp_last_tracked'] = self.lastInfos["trackers"][t.serial_number]['vive_timestamp_last_tracked']
+                currentTrackerDict['time_since_last_tracked'] = ret['vive_timestamp'] - self.lastInfos['trackers'][t.serial_number]['vive_timestamp_last_tracked']
 
             if self.enableButtons:
                 if currentTrackerDict['device_type'] == 'controller':
@@ -149,14 +217,26 @@ class Vive_provider:
                     currentTrackerDict['buttonPressed'] = (state.ulButtonPressed != 0)
 
             
-            trackersDict[str(t.serial_number)] = currentTrackerDict
-                
-        ret["trackers"] = trackersDict             
+            trackersDict[t.serial_number] = currentTrackerDict
+                     
+        ret["trackers"] = trackersDict
 
+        references_corrected = {}
+        for id in references:
+            references_corrected[id] = self.calib.transform_frame(references, references[id])
+
+        ret["references_corrected"] = references_corrected
+
+        self.calib.check_consistency(references)
         self.lastInfos = ret.copy()
             
         return ret
 
+    def vibrate(self, serial, duration=250):
+        openvr_id = self.trackers[serial].openvr_id
+        for x in range(duration): 
+            self.vr.triggerHapticPulse(openvr_id, 0, 5000)
+            time.sleep(0.001) 
     
     def getControllersInfos(self, raw=False):
         controllers = []
@@ -164,7 +244,7 @@ class Vive_provider:
 
         for t in self.trackers.values():
             if(str(t.device_type) == "controller"):
-                controllers.append(trackers[str(t.serial_number)])
+                controllers.append(trackers[t.serial_number])
 
         return controllers
                 

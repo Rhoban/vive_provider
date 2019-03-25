@@ -55,6 +55,8 @@ message TrackerMsg {
   optional Vector3d cartesian_velocity = 5;
   optional string serial_number = 6;
   optional Matrix4x3 pose_matrix = 7;
+  optional string device_type = 8;
+  
   // TODO: angular speed -> currently vector3d
 }
 
@@ -76,6 +78,7 @@ message GlobalMsg {
    * All the trackers currently active
    */
   repeated TrackerMsg trackers = 3;
+  optional uint64 seq = 4;
 }
 
 message GlobalCollection {

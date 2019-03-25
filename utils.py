@@ -36,14 +36,16 @@ def convert_to_quaternion(pose_mat):
     z = pose_mat[2][3]
     return [x,y,z,r_w,r_x,r_y,r_z]
 
-def trackersInfos_to_GlobalMsg(trackersInfos):
+def trackersInfos_to_GlobalMsg(trackersInfos, seq):
     pb_msg = GlobalMsg()
 
     
     pb_msg.vive_timestamp = trackersInfos['vive_timestamp']
     pb_msg.time_since_epoch = trackersInfos['time_since_epoch']
+    pb_msg.seq = seq
 
     trackers = trackersInfos["trackers"]
+    # print(trackers)
     i = 0
     for t in trackers.values():
         pb_msg.trackers.add()
@@ -61,6 +63,7 @@ def trackersInfos_to_GlobalMsg(trackersInfos):
         pb_msg.trackers[i].cartesian_velocity.y = t['velocity'][1]
         pb_msg.trackers[i].cartesian_velocity.z = t['velocity'][2]
         pb_msg.trackers[i].serial_number = t['serial_number']
+        pb_msg.trackers[i].device_type = t['device_type']
 
         pose_matrix = np.array(t['pose_matrix'])
         pb_msg.trackers[i].pose_matrix.i0j0 = pose_matrix[0][0]
@@ -90,6 +93,7 @@ def GlobalMsg_to_trackersInfos(data):
     ret = {}
     ret['vive_timestamp'] = pb_msg.vive_timestamp
     ret['time_since_epoch'] = pb_msg.time_since_epoch
+    ret['seq'] = pb_msg.seq
 
     trackersDict = {}
     for i in range(0, nbTrackers):
@@ -109,6 +113,7 @@ def GlobalMsg_to_trackersInfos(data):
         currentTrackerDict['velocity'][1] = pb_msg.trackers[i].cartesian_velocity.y
         currentTrackerDict['velocity'][2] = pb_msg.trackers[i].cartesian_velocity.z
         currentTrackerDict['serial_number'] = pb_msg.trackers[i].serial_number
+        currentTrackerDict['device_type'] = pb_msg.trackers[i].device_type
 
         pose_matrix = [[0, 0, 0, 0],
                        [0, 0, 0, 0],
@@ -131,14 +136,14 @@ def GlobalMsg_to_trackersInfos(data):
         pose_matrix[3][1] = 0
         pose_matrix[3][2] = 0
         pose_matrix[3][3] = 1
-        currentTrackerDict['pose_matrix'] = pose_matrix
+        currentTrackerDict['pose_matrix'] = np.matrix(pose_matrix)
 
         trackersDict[currentTrackerDict['serial_number']] = currentTrackerDict
         
 
     ret["trackers"] = trackersDict
     
-    return ret, nbTrackers
+    return ret
 
 # TODO    
 def get_dummy_trackerInfos():
