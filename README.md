@@ -1,6 +1,6 @@
 # Vive provider
 
-This OpenVR based code can be used to grab positions from the vive, allow you to calibrate
+This OpenVR based code can be used to grab positions from the HTC Vive, allow you to calibrate
 it, and to run a server that broadcasts the positions over the network.
 
 ## Get the dependencies
