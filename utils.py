@@ -202,3 +202,51 @@ def rigid_transform_3D(A, B):
     # print(t)
 
     return R, t
+
+def translation_transformation(translation=[0, 0, 0]):
+    transform = np.matrix(np.identity(4))
+
+    transform[0, 3] = translation[0]
+    transform[1, 3] = translation[1]
+    transform[2, 3] = translation[2]
+
+    return transform
+
+def rotation_transformation(theta, axis='z'):
+    if axis == 'x':
+        return np.matrix([[1,               0,                0, 0], 
+                        [0, math.cos(theta), -math.sin(theta), 0], 
+                        [0, math.sin(theta),  math.cos(theta), 0], 
+                        [0,                0,               0, 1]])
+    if axis == 'y':
+        return np.matrix([[math.cos(theta), 0, math.sin(theta), 0], 
+                        [0, 1,               0, 0], 
+                        [-math.sin(theta), 0, math.cos(theta), 0], 
+                        [0, 0,               0, 1]])
+    if axis == 'z':
+        return np.matrix([[math.cos(theta), -math.sin(theta), 0, 0], 
+                        [math.sin(theta),  math.cos(theta), 0, 0], 
+                        [0,                0, 1, 0], 
+                        [0,                0, 0, 1]])
+
+
+def average_angles(angleA, angleB, weightA=1, weightB=1):
+    posA = np.array([math.cos(angleA), math.sin(angleA)])
+    posB = np.array([math.cos(angleB), math.sin(angleB)])
+    pos = (posA*weightA + posB*weightB)/(weightA+weightB)
+    return math.atan2(pos[1], pos[0])
+
+def average_transforms(frameA, frameB, weightA=1, weightB=1):
+    rpyA = convert_to_euler(frameA)
+    rpyB = convert_to_euler(frameB)
+    rpy = [average_angles(a, b, weightA, weightB) for a, b in zip(rpyA, rpyB)]
+
+    posA = np.array(frameA[:3,3].T)[0]
+    posB = np.array(frameB[:3,3].T)[0]
+    pos = (posA*weightA + posB*weightB)/(weightA+weightB)
+
+    frame = rotation_transformation(rpy[0], axis='x')
+    frame = rotation_transformation(rpy[1], axis='y')*frame
+    frame = rotation_transformation(rpy[2], axis='z')*frame
+    frame = translation_transformation(pos)*frame
+    return frame
