@@ -40,7 +40,7 @@ controllers positions.
 
 ### Running the server
 
-The script `vive_provider.py` is a server that broadcasts the positions through the network
+The script `vive_server.py` is a server that broadcasts the positions through the network
 using UDP and protobuf definition from `proto/vive.proto`.
 
 To check, you can also run the `vive_bullet_client.py` that listens to the network instead of
@@ -48,4 +48,4 @@ using directly the OpenVR API.
 
 ## Re-generate protobuf
 
-You can use `generate_protobuf.sh` to regenerate protobuf iles
+You can use `generate_protobuf.sh` to regenerate protobuf files
