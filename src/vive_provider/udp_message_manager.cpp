@@ -11,7 +11,7 @@ using namespace std::chrono;
 
 namespace vive_provider
 {
-int getDefaultPort(int team_id)
+int getDefaultPort()
 {
   return 37020;
 }
@@ -136,7 +136,7 @@ void UDPMessageManager::loadMessages(const std::string& path)
   }
 }
 
-GlobalMsg UDPMessageManager::getMessage(uint64_t time_stamp, bool system_clock)
+GlobalMsg UDPMessageManager::getMessage(uint64_t time_stamp, bool system_clock) const
 {
   if (system_clock)
   {
@@ -169,6 +169,20 @@ uint64_t UDPMessageManager::getStart(bool system_clock) const
   return start;
 }
 
+uint64_t UDPMessageManager::getLast(bool system_clock) const
+{
+  if (messages.size() == 0)
+  {
+    return 0;
+  }
+  uint64_t end = messages.end()->first;
+  if (system_clock)
+  {
+    end += clock_offset;
+  }
+  return end;
+}
+
 void UDPMessageManager::autoUpdateOffset()
 {
   if (messages.size() > 0)
@@ -186,6 +200,11 @@ void UDPMessageManager::autoUpdateOffset()
     }
     clock_offset = msg.time_since_epoch() - msg.vive_timestamp();
   }
+}
+
+void UDPMessageManager::setOffset(int64_t new_offset)
+{
+  clock_offset = new_offset;
 }
 
 int64_t UDPMessageManager::getOffset() const
