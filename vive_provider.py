@@ -8,6 +8,7 @@ import json
 import numpy as np
 from utils import *
 import  numpy.linalg as linalg
+from functools import reduce
 import os
 from vive_pb2 import *
 import socket
@@ -30,6 +31,7 @@ class Calib:
         if self.calibration is None:
             return trackerToWorld
 
+        frames = []
         # return self.calibration['worldToField']*trackerToWorld
 
         for id in references:
@@ -40,10 +42,15 @@ class Calib:
                 trackerToReference = np.linalg.inv(referenceToWorld)*trackerToWorld
                 trackerToField = np.linalg.inv(fieldToReference)*trackerToReference
                 # print(str(id)+' '+str(trackerToReference))
-                return trackerToField
+                frames.append(trackerToField)
         
-        print('! ERROR: Cant find a suitable reference!')
-        exit()
+        if len(frames) > 1:
+            return reduce(lambda a, b: average_transforms(a, b), frames)
+        elif len(frames) == 1:
+            return frames[0]
+        else:
+            print('! ERROR: Cant find a suitable reference!')
+            exit()
 
     def check_consistency(self, references):
 
@@ -60,7 +67,7 @@ class Calib:
 
                     if not np.allclose(expectedTransformation.T[3,:3], transformation.T[3,:3], atol=0.15) or \
                         not np.allclose(expectedTransformation[:3,:3], transformation[:3,:3], atol=0.01):
-                        print('! ERROR: Transformation from %s to %s is not consistent with calibration' % (keyA, keyB))
+                            print('! ERROR: Transformation from %s to %s is not consistent with calibration' % (keyA, keyB))
 
 class Tracker:
 
