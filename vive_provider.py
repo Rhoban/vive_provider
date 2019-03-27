@@ -190,13 +190,10 @@ class Vive_provider:
 
             if not raw:
                 if t.device_type == 'tracker':
-                    Rz = np.matrix([
-                        [math.cos(math.pi/2), -math.sin(math.pi/2), 0, 0],
-                        [math.sin(math.pi/2), math.cos(math.pi/2), 0, 0],
-                        [0, 0, 1, 0],
-                        [0, 0, 0, 1]])
-                    m = m*Rz
+                    m = m*rotation_transformation(math.pi, 'y')
+                    m = m*rotation_transformation(math.pi/2, 'z')
                 corrected = self.calib.transform_frame(references, m)
+                print(corrected)
 
             if t.device_type == 'controller':
                 T = np.matrix([
