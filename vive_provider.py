@@ -193,7 +193,6 @@ class Vive_provider:
                     m = m*rotation_transformation(math.pi, 'y')
                     m = m*rotation_transformation(math.pi/2, 'z')
                 corrected = self.calib.transform_frame(references, m)
-                print(corrected)
 
             if t.device_type == 'controller':
                 T = np.matrix([
