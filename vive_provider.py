@@ -65,9 +65,12 @@ class Calib:
                     expectedTransformation = self.calibration[keyB] * np.linalg.inv(self.calibration[keyA])
                     transformation = np.linalg.inv(references[keyB]) * references[keyA]
 
-                    if not np.allclose(expectedTransformation.T[3,:3], transformation.T[3,:3], atol=0.15) or \
-                        not np.allclose(expectedTransformation[:3,:3], transformation[:3,:3], atol=0.01):
-                            print('! ERROR: Transformation from %s to %s is not consistent with calibration' % (keyA, keyB))
+                    if not np.allclose(expectedTransformation.T[3,:3], transformation.T[3,:3], atol=0.15):
+                        print('! ERROR: Translation from %s to %s is not consistent with calibration' % (keyA, keyB))
+                        # print('Expected: %g, %g, %g' % tuple(np.array(expectedTransformation.T[3,:3])[0]))
+                        # print('Got: %g, %g, %g' % tuple(np.array(transformation.T[3,:3])[0]))
+                    elif not np.allclose(expectedTransformation[:3,:3], transformation[:3,:3], atol=0.05):   
+                        print('! ERROR: Rotation from %s to %s is not consistent with calibration' % (keyA, keyB))
 
 class Tracker:
 
