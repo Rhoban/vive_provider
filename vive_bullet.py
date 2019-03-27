@@ -93,9 +93,9 @@ class BulletViewer:
 
         while True:
             self.update()
+            sleep(dt)
 
             if self.physics:
-                sleep(dt)
                 t += dt
                 p.stepSimulation()
 
