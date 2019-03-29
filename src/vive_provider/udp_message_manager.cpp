@@ -175,7 +175,7 @@ uint64_t UDPMessageManager::getLast(bool system_clock) const
   {
     return 0;
   }
-  uint64_t end = messages.end()->first;
+  uint64_t end = messages.rbegin()->first;
   if (system_clock)
   {
     end += clock_offset;
