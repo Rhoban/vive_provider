@@ -12,7 +12,7 @@ int main(int argc, char** argv)
 {
   TCLAP::CmdLine cmd("Handle logs received from trackers from the HTC Vive", ' ', "1.0");
   TCLAP::ValueArg<int> port_arg("p", "port", "The port on which vive messages are received (-1: no listener)", false,
-                                -1, "port", cmd);
+                                37020, "port", cmd);
   TCLAP::ValueArg<std::string> input_arg("i", "input", "An optional path to existing logs", false, "", "path", cmd);
   TCLAP::ValueArg<std::string> output_arg("o", "output", "The path to which the logs will be saved", true,
                                           "data_vive.bin", "path", cmd);
