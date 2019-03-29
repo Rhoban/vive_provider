@@ -195,7 +195,6 @@ class Vive_provider:
                 if t.device_type == 'tracker':
                     # These transformations are here to switch from the official frame to
                     # our frame where the tracker LED is along the X axis
-                    pass
                     trackerToWorld = trackerToWorld*rotation_transformation(math.pi, 'y')
                     trackerToWorld = trackerToWorld*rotation_transformation(math.pi/2, 'z')
                     trackerToWorld = trackerToWorld*translation_transformation([0, 0, -0.01])
