@@ -186,27 +186,26 @@ class Vive_provider:
             p = currentTracker.mDeviceToAbsoluteTracking
             m = np.matrix([list(p[0]), list(p[1]), list(p[2])])
             m = np.vstack((m, [0, 0, 0, 1]))
-            corrected = m
+            trackerToWorld = m
+
+            if t.device_type == 'controller':
+                trackerToWorld = trackerToWorld*translation_transformation([0, -0.025, -0.025])
 
             if not raw:
                 if t.device_type == 'tracker':
-                    m = m*rotation_transformation(math.pi, 'y')
-                    m = m*rotation_transformation(math.pi/2, 'z')
-                corrected = self.calib.transform_frame(references, m)
-
-            if t.device_type == 'controller':
-                T = np.matrix([
-                    [1, 0, 0, 0],
-                    [0, 1, 0, -0.025],
-                    [0, 0, 1, -0.025],
-                    [0, 0, 0, 1]])
-                corrected = corrected*T
+                    # These transformations are here to switch from the official frame to
+                    # our frame where the tracker LED is along the X axis
+                    pass
+                    trackerToWorld = trackerToWorld*rotation_transformation(math.pi, 'y')
+                    trackerToWorld = trackerToWorld*rotation_transformation(math.pi/2, 'z')
+                    trackerToWorld = trackerToWorld*translation_transformation([0, 0, -0.01])
+                trackerToWorld = self.calib.transform_frame(references, trackerToWorld)
 
             currentTrackerDict['openvr_id'] = t.openvr_id
             currentTrackerDict['serial_number'] = t.serial_number
             currentTrackerDict['device_type'] = t.device_type
-            currentTrackerDict['pose'] = convert_to_quaternion(np.array(corrected[:3, :4]))
-            currentTrackerDict['pose_matrix'] = corrected
+            currentTrackerDict['pose'] = convert_to_quaternion(np.array(trackerToWorld[:3, :4]))
+            currentTrackerDict['pose_matrix'] = trackerToWorld
             currentTrackerDict['velocity'] = [currentTracker.vVelocity[0], currentTracker.vVelocity[1], currentTracker.vVelocity[2]]
             currentTrackerDict['angular_velocity'] = [currentTracker.vAngularVelocity[0], currentTracker.vAngularVelocity[1], currentTracker.vAngularVelocity[2]]
             
@@ -233,7 +232,8 @@ class Vive_provider:
 
         ret["references_corrected"] = references_corrected
 
-        self.calib.check_consistency(references)
+        if not raw:
+            self.calib.check_consistency(references)
         self.lastInfos = ret.copy()
             
         return ret
