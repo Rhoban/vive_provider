@@ -11,7 +11,7 @@ from vive_provider import *
 vp = Vive_provider()
 
 addr = '<broadcast>'
-addr = '10.0.0.255'
+# addr = '10.0.0.255'
 server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
 server.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
 server.settimeout(0.2)
@@ -33,7 +33,7 @@ while True:
     for id in trackers['trackers']:
         p = trackers['trackers'][id]['pose']
         rpy = np.array(convert_to_euler(trackers['trackers'][id]['pose_matrix']))*180.0/math.pi
-        print('- %s' % (id))
+        print('- %s (%s)' % (id, trackers['trackers'][id]['device_type']))
         print('  - x: %g, y: %g, z: %g' % (p[0], p[1], p[2]))
         print('  - roll: %g, pitch: %f, yaw: %g' % tuple(rpy))
     print()
