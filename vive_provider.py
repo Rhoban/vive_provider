@@ -8,6 +8,7 @@ import json
 import numpy as np
 from utils import *
 import  numpy.linalg as linalg
+from functools import reduce
 import os
 from vive_pb2 import *
 import socket
@@ -30,6 +31,7 @@ class Calib:
         if self.calibration is None:
             return trackerToWorld
 
+        frames = []
         # return self.calibration['worldToField']*trackerToWorld
 
         for id in references:
@@ -40,10 +42,15 @@ class Calib:
                 trackerToReference = np.linalg.inv(referenceToWorld)*trackerToWorld
                 trackerToField = np.linalg.inv(fieldToReference)*trackerToReference
                 # print(str(id)+' '+str(trackerToReference))
-                return trackerToField
+                frames.append(trackerToField)
         
-        print('! ERROR: Cant find a suitable reference!')
-        exit()
+        if len(frames) > 1:
+            return reduce(lambda a, b: average_transforms(a, b), frames)
+        elif len(frames) == 1:
+            return frames[0]
+        else:
+            print('! ERROR: Cant find a suitable reference!')
+            exit()
 
     def check_consistency(self, references):
 
@@ -58,9 +65,12 @@ class Calib:
                     expectedTransformation = self.calibration[keyB] * np.linalg.inv(self.calibration[keyA])
                     transformation = np.linalg.inv(references[keyB]) * references[keyA]
 
-                    if not np.allclose(expectedTransformation.T[3,:3], transformation.T[3,:3], atol=0.15) or \
-                        not np.allclose(expectedTransformation[:3,:3], transformation[:3,:3], atol=0.01):
-                        print('! ERROR: Transformation from %s to %s is not consistent with calibration' % (keyA, keyB))
+                    if not np.allclose(expectedTransformation.T[3,:3], transformation.T[3,:3], atol=0.15):
+                        print('! ERROR: Translation from %s to %s is not consistent with calibration' % (keyA, keyB))
+                        # print('Expected: %g, %g, %g' % tuple(np.array(expectedTransformation.T[3,:3])[0]))
+                        # print('Got: %g, %g, %g' % tuple(np.array(transformation.T[3,:3])[0]))
+                    elif not np.allclose(expectedTransformation[:3,:3], transformation[:3,:3], atol=0.05):   
+                        print('! ERROR: Rotation from %s to %s is not consistent with calibration' % (keyA, keyB))
 
 class Tracker:
 
@@ -176,31 +186,26 @@ class Vive_provider:
             p = currentTracker.mDeviceToAbsoluteTracking
             m = np.matrix([list(p[0]), list(p[1]), list(p[2])])
             m = np.vstack((m, [0, 0, 0, 1]))
-            corrected = m
-
-            if not raw:
-                if t.device_type == 'tracker':
-                    Rz = np.matrix([
-                        [math.cos(math.pi/2), -math.sin(math.pi/2), 0, 0],
-                        [math.sin(math.pi/2), math.cos(math.pi/2), 0, 0],
-                        [0, 0, 1, 0],
-                        [0, 0, 0, 1]])
-                    m = m*Rz
-                corrected = self.calib.transform_frame(references, m)
+            trackerToWorld = m
 
             if t.device_type == 'controller':
-                T = np.matrix([
-                    [1, 0, 0, 0],
-                    [0, 1, 0, -0.025],
-                    [0, 0, 1, -0.025],
-                    [0, 0, 0, 1]])
-                corrected = corrected*T
+                trackerToWorld = trackerToWorld*translation_transformation([0, -0.025, -0.025])
+
+            if t.device_type == 'tracker':
+                # These transformations are here to switch from the official frame to
+                # our frame where the tracker LED is along the X axis
+                trackerToWorld = trackerToWorld*rotation_transformation(math.pi, 'y')
+                trackerToWorld = trackerToWorld*rotation_transformation(math.pi/2, 'z')
+                trackerToWorld = trackerToWorld*translation_transformation([0, 0, -0.01])
+                
+            if not raw:
+                trackerToWorld = self.calib.transform_frame(references, trackerToWorld)
 
             currentTrackerDict['openvr_id'] = t.openvr_id
             currentTrackerDict['serial_number'] = t.serial_number
             currentTrackerDict['device_type'] = t.device_type
-            currentTrackerDict['pose'] = convert_to_quaternion(np.array(corrected[:3, :4]))
-            currentTrackerDict['pose_matrix'] = corrected
+            currentTrackerDict['pose'] = convert_to_quaternion(np.array(trackerToWorld[:3, :4]))
+            currentTrackerDict['pose_matrix'] = trackerToWorld
             currentTrackerDict['velocity'] = [currentTracker.vVelocity[0], currentTracker.vVelocity[1], currentTracker.vVelocity[2]]
             currentTrackerDict['angular_velocity'] = [currentTracker.vAngularVelocity[0], currentTracker.vAngularVelocity[1], currentTracker.vAngularVelocity[2]]
             
@@ -227,7 +232,8 @@ class Vive_provider:
 
         ret["references_corrected"] = references_corrected
 
-        self.calib.check_consistency(references)
+        if not raw:
+            self.calib.check_consistency(references)
         self.lastInfos = ret.copy()
             
         return ret

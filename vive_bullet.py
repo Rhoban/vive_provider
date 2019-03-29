@@ -1,4 +1,4 @@
-#!/usr/bin/env python.
+#!/usr/bin/env python
 import math
 import numpy as np
 import pybullet as p
@@ -17,9 +17,8 @@ class BulletViewer:
         self.trackers = {}
         self.references = {}
         self.physics = False
+        self.offset = None
         self.texts= {}
-
-        p.resetDebugVisualizerCamera
 
         infos = self.vive.getTrackersInfos()
 
@@ -54,6 +53,15 @@ class BulletViewer:
             info = infos['trackers'][id]
             m = info['pose_matrix']
             position = np.array(m.T[3])[0][:3]
+
+            # if info['device_type'] == 'controller' and self.offset is None and np.linalg.norm(position)>0.5:
+            #     self.offset = position.copy()
+            #     print('Defining')
+            #     print(self.offset)
+            
+            # if self.offset is not None:
+            #     position -= self.offset
+
             orientation = m[:3,:3]
             euler = convert_to_euler(orientation)
             orientation = p.getQuaternionFromEuler(euler)
@@ -89,13 +97,12 @@ class BulletViewer:
         dt = 0.001
         t = 0
         p.setPhysicsEngineParameter(fixedTimeStep=dt)
-        offset = None
 
         while True:
             self.update()
+            sleep(dt)
 
             if self.physics:
-                sleep(dt)
                 t += dt
                 p.stepSimulation()
 
