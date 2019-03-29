@@ -42,7 +42,16 @@ while failed:
         while not vp.getControllersInfos(raw=True)[0]['buttonPressed']:
             time.sleep(0.01)
 
-        pose = vp.getControllersInfos(raw=True)[0]['pose']
+        pose = None
+        
+        # XXX: Uncomment to try to use tracker if available
+        # trackers = vp.getTrackersInfos(raw=True)['trackers']
+        # for entry in trackers:
+        #     if trackers[entry]['device_type'] == 'tracker':
+        #         pose = trackers[entry]['pose']
+
+        if pose is None:
+            pose = vp.getControllersInfos(raw=True)[0]['pose']
 
         # print(pose[0], pose[1], pose[2])
         position = pose[:3]
