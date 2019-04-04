@@ -90,16 +90,22 @@ class Vive_provider:
         self.references = {}
         self.lastInfos = {}
         self.enableButtons = enableButtons
+        self.taggedPositions = []
         
         if(not self.clientMode):
             self.vr = openvr.init(openvr.VRApplication_Other)
             self.calib = Calib(calibFilePath)
+            if os.path.exists('taggedPositions.json'):
+                f = open('taggedPositions.json', 'r')
+                self.taggedPositions = json.load(f)
+                f.close()
         else:
             self.vr = None
             self.calib = None
             
             self.client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
             self.client.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+            self.client.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             self.client.bind(("", 37020))
 
         self.scanTrackers()            
@@ -225,6 +231,7 @@ class Vive_provider:
             trackersDict[t.serial_number] = currentTrackerDict
                      
         ret["trackers"] = trackersDict
+        ret["tagged_positions"] = self.taggedPositions
 
         references_corrected = {}
         for id in references:

@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 from vive_bullet import *
 
 vive = Vive_provider(clientMode=True)

@@ -14,6 +14,7 @@ addr = '<broadcast>'
 # addr = '10.0.0.255'
 server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
 server.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 server.settimeout(0.2)
 server.bind(("", 44444))
 
@@ -21,6 +22,7 @@ pb_msg = GlobalMsg()
 i = 0
 while True:
     trackers = vp.getTrackersInfos()
+
     pb_msg.Clear()
     pb_msg = trackersInfos_to_GlobalMsg(trackers, i)
     # pb_msg = trackersInfos_to_GlobalMsg(get_dummy_trackerInfos())

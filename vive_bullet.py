@@ -35,6 +35,10 @@ class BulletViewer:
             tracker = p.loadURDF(asset, startPos, startOrientation)
             self.trackers[id] = tracker
 
+        for position in infos['tagged_positions']:
+            target = self.addUrdf('assets/target/robot.urdf')
+            self.setUrdfPosition(target, position)
+
         for id in self.vive.references:
             reference = p.loadURDF('assets/lighthouse/robot.urdf', [0, 0, 0])
             self.references[id] = reference
