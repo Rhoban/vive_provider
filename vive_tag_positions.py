@@ -4,6 +4,11 @@ from vive_provider import *
 from vive_bullet import BulletViewer
 from utils import rigid_transform_3D
 
+# Erasing tagged positions
+f = open('taggedPositions.json', 'w')
+f.write(json.dumps([]))
+f.close()
+
 vp = Vive_provider(enableButtons=True)
         
 # Creating bullet viewer and loading the field
