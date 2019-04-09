@@ -33,6 +33,9 @@ try:
         collection.messages.extend([pb_msg])
         i += 1
 
+        # Can be removed to have full logs, to test
+        time.sleep(0.01);
+
         # Only sending network messages at ~100Hz
         if time.time()-last > 0.01:
             last = time.time()
