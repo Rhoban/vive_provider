@@ -2,6 +2,7 @@
 
 from vive_pb2 import *
 
+from datetime import datetime
 import socket
 import time
 from utils import *
@@ -11,6 +12,8 @@ from vive_provider import *
 collection = GlobalCollection()
 
 try:
+    while True:
+        pass
     vp = Vive_provider()
 
     addr = '<broadcast>'
@@ -59,8 +62,9 @@ try:
             bytes_sent = server.sendto(trackersInfos, (addr, 37020))
 
 except KeyboardInterrupt:
-    print('Interrupted, saving the collection to vive.bin ...')
-    f = open('vive.bin', 'wb')
+    fname = datetime.now().strftime('%Y_%m_%d-%Hh%Mm%Ss')+'_vive.bin'
+    print('Interrupted, saving the collection to %s ...' % fname)
+    f = open('logs/'+fname, 'wb')
     s = collection.SerializeToString()
     f.write(s)
     f.close()
