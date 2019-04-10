@@ -12,8 +12,6 @@ from vive_provider import *
 collection = GlobalCollection()
 
 try:
-    while True:
-        pass
     vp = Vive_provider()
 
     addr = '<broadcast>'
