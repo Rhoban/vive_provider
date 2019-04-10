@@ -158,12 +158,11 @@ class Vive_provider:
             pb_msg.ParseFromString(data)
             return GlobalMsg_to_trackersInfos(data)
             
-
+        ret = {}
         ret['vive_timestamp'] = int(time.perf_counter()*1000000)
         ret['time_since_epoch'] = int(time.time()*1000000)
         
         pose = self.vr.getDeviceToAbsoluteTrackingPose(openvr.TrackingUniverseStanding, 0, openvr.k_unMaxTrackedDeviceCount)
-        ret = {}
 
         references = {}
         for r in self.references:

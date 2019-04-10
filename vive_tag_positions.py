@@ -21,10 +21,8 @@ if len(controllersInfos) != 1:
     exit()
 
 # Loop to retrieve the points
-failed = True
 positions = []
-while failed:
-    failed = False
+while True:
     positions = []
     references = {}
     buttonState = 0
@@ -49,6 +47,11 @@ while failed:
             viewer.setUrdfPosition(target, position)
                     
             positions.append(position)
+
+            for k in range(len(positions)):
+                vp.vibrate(vp.getControllersInfos(raw=True)[0]['serial_number'], 200)
+                time.sleep(0.25)
+            print('Tagged %d positions' % len(positions))
 
             f = open('taggedPositions.json', 'w')
             f.write(json.dumps(positions))
