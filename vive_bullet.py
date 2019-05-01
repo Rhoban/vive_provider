@@ -20,6 +20,12 @@ class BulletViewer:
         self.offset = None
         self.texts= {}
 
+        p.configureDebugVisualizer(p.COV_ENABLE_GUI,0)
+        p.configureDebugVisualizer(p.COV_ENABLE_SEGMENTATION_MARK_PREVIEW,0)
+        p.configureDebugVisualizer(p.COV_ENABLE_DEPTH_BUFFER_PREVIEW,0)
+        p.configureDebugVisualizer(p.COV_ENABLE_RGB_BUFFER_PREVIEW,0)
+        p.configureDebugVisualizer(p.COV_ENABLE_MOUSE_PICKING,1)
+
         infos = self.vive.getTrackersInfos()
 
         for id in self.vive.trackers:
