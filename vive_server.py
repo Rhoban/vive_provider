@@ -14,7 +14,8 @@ collection = GlobalCollection()
 try:
     vp = Vive_provider()
 
-    addr = '<broadcast>'
+    addr = None
+    # addr = '<broadcast>'
     # addr = '10.0.0.255'
     server = socket.socket(
         socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
@@ -57,7 +58,8 @@ try:
                 print('  - roll: %g, pitch: %f, yaw: %g' % tuple(rpy))
             print()
 
-            bytes_sent = server.sendto(trackersInfos, (addr, 37020))
+            if addr is not None:
+                bytes_sent = server.sendto(trackersInfos, (addr, 37020))
 
 except KeyboardInterrupt:
     fname = datetime.now().strftime('%Y_%m_%d-%Hh%Mm%Ss')+'_vive.bin'
