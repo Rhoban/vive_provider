@@ -13,6 +13,11 @@ You need to install steam and SteamVR.
 `/lib/udev/rules.d/60-HTC-Vive-perms.rules` is not created by the process, you can
 use the one from `misc/`.*
 
+### Remove the need of headset
+
+You can follow this tutorial to lunch steamvr without headset :
+http://www.pencilsquaregames.com/getting-steamvr-tracking-data-in-unity-without-a-hmd/
+
 ### Python
 
 You need to install the following dependencies:
