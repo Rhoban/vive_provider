@@ -27,7 +27,15 @@ Is this really needed ?
 
 ### Remove the need of headset
 
-In the file `~/.steam/steam/steamapps/common/SteamVR/drivers/null/resources/settings/default.vrsettings` give the value `true` to "enable". In the file `~/.steam/steam/steamapps/common/SteamVR/resources/settings/default.vrsettings` give the value `null` to "forcedDriver" and `true` to "activateMultipleDrivers".
+Add the following options to "~/.steam/steam/config/steamvr.settings" :
+"steamvr"{
+       "requireHmd" : false,
+       "forcedDriver": null,
+       "activateMultipleDrivers": true
+},
+"driver_null" : {
+    "enable" : true
+}
 
 ### If you have intel graphics ###
 
