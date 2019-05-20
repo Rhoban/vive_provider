@@ -13,16 +13,29 @@ You need to install steam and SteamVR.
 `/lib/udev/rules.d/60-HTC-Vive-perms.rules` is not created by the process, you can
 use the one from `misc/`.*
 
-### Remove the need of headset
-
-You can follow this tutorial to lunch steamvr without headset :
-http://www.pencilsquaregames.com/getting-steamvr-tracking-data-in-unity-without-a-hmd/
-
 ### Python
 
 You need to install the following dependencies:
 
     pip install numpy pybullet openvr protobuf
+
+## How to use SteamVR ##
+
+### Install the beta version of SteamVR ###
+
+Is this really needed ?
+
+### Remove the need of headset
+
+In the file `~/.steam/steam/steamapps/common/SteamVR/drivers/null/resources/settings/default.vrsettings` give the value `true` to "enable". In the file `~/.steam/steam/steamapps/common/SteamVR/resources/settings/default.vrsettings` give the value `null` to "forcedDriver" and `true` to "activateMultipleDrivers".
+
+### If you have intel graphics ###
+
+Intel graphics are not supported by SteamVRV.
+Error (306) : install mesa-vulkan-drivers (needed ?)
+Error (307) : you can track with this error
+
+After lunching steam, you might need to kill the process vrcompositor.
 
 ## Usage
 
