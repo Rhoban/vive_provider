@@ -5,6 +5,8 @@
 #include <fstream>
 #include <iostream>
 
+#include <unistd.h>
+
 #define PACKET_MAX_SIZE 10000
 
 using namespace std::chrono;
@@ -59,7 +61,10 @@ void UDPMessageManager::run()
   {
     len = PACKET_MAX_SIZE;
     if (!broadcaster->checkMessage((unsigned char*)data, len))
+    {
+      usleep(1000);
       continue;
+    }
     if (len >= PACKET_MAX_SIZE)
     {
       std::cerr << DEBUG_INFO << " packet is too long: " << len << std::endl;
