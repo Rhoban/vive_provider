@@ -19,6 +19,32 @@ You need to install the following dependencies:
 
     pip install numpy pybullet openvr protobuf
 
+## How to use SteamVR ##
+
+### Install the beta version of SteamVR ###
+
+Is this really needed ?
+
+### Remove the need of headset
+
+Add the following options to "~/.steam/steam/config/steamvr.settings" :
+"steamvr"{
+       "requireHmd" : false,
+       "forcedDriver": null,
+       "activateMultipleDrivers": true
+},
+"driver_null" : {
+    "enable" : true
+}
+
+### If you have intel graphics ###
+
+Intel graphics are not supported by SteamVRV.
+Error (306) : install mesa-vulkan-drivers (needed ?)
+Error (307) : you can track with this error
+
+After lunching steam, you might need to kill the process vrcompositor.
+
 ## Usage
 
 ### Calibration
