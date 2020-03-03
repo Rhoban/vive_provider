@@ -27,7 +27,9 @@ Is this really needed ?
 
 ### Remove the need of headset
 
-Add the following options to "~/.steam/steam/config/steamvr.settings" :
+Add the following options to `~/.steam/steam/config/steamvr.settings`:
+
+```json
 "steamvr"{
        "requireHmd" : false,
        "forcedDriver": null,
@@ -36,6 +38,7 @@ Add the following options to "~/.steam/steam/config/steamvr.settings" :
 "driver_null" : {
     "enable" : true
 }
+```
 
 ### If you have intel graphics ###
 
