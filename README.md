@@ -58,6 +58,18 @@ First, you can edit `fieldPositions.json` to setup your ground truth positions. 
 `vive_field_calibration.py`. You need to have a paired controller then, and to go to each
 positions one by one (indicated in the 3D viewer by an arrow) to tag them.
 
+The `fieldPositions.json` should contain at least 3 points, and formatted as following:
+
+```json
+[
+    [x1, y1, z1],
+    [x2, y2, z2],
+    [x3, y3, z3],
+    ...
+    [xn, yn, zn]
+]
+```
+
 Alternatively, you can pass an argument to `vive_field_calibration.py` which is the json
 file path to the field positions.
 
