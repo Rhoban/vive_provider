@@ -31,9 +31,9 @@ Add the following options to `~/.steam/steam/config/steamvr.settings`:
 
 ```json
 "steamvr"{
-       "requireHmd" : false,
-       "forcedDriver": null,
-       "activateMultipleDrivers": true
+    "requireHmd" : false,
+    "forcedDriver": null,
+    "activateMultipleDrivers": true
 },
 "driver_null" : {
     "enable" : true
