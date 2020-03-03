@@ -102,7 +102,7 @@ class BulletViewer:
 
     
     def execute(self):
-        # Simulation en temps réel
+        # Simulation en temps reel
         p.setRealTimeSimulation(1)
         dt = 0.001
         t = 0

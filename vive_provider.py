@@ -136,7 +136,7 @@ class Vive_provider:
                 continue
             
             device_class = openvr.VRSystem().getTrackedDeviceClass(i)
-            serial_number = openvr.VRSystem().getStringTrackedDeviceProperty(i, openvr.Prop_SerialNumber_String).decode('UTF-8')
+            serial_number = openvr.VRSystem().getStringTrackedDeviceProperty(i, openvr.Prop_SerialNumber_String)
 
             if(device_class == openvr.TrackedDeviceClass_GenericTracker or device_class == openvr.TrackedDeviceClass_Controller):
                 if device_class == openvr.TrackedDeviceClass_Controller:
