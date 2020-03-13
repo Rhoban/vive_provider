@@ -106,7 +106,7 @@ class Vive_provider:
             self.client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
             self.client.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
             self.client.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            self.client.bind(("", 37020))
+            self.client.bind(("", 44444))
 
         self.scanTrackers()            
             
