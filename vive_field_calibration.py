@@ -77,7 +77,7 @@ while failed:
             dist = np.linalg.norm(np.array(other_position) - np.array(position))
             error = abs(dist-expected_dist)
 
-            if error > 0.05:
+            if error > 0.07:
                 print('! ERROR: Expected distance is wrong (expected: %f m, got: %f m, error: %f m)!' % (expected_dist, dist, error))
                 vp.vibrate(vp.getControllersInfos(raw=True)[0]['serial_number'])
                 failed = True
