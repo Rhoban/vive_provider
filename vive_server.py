@@ -14,9 +14,9 @@ collection = GlobalCollection()
 try:
     vp = Vive_provider()
 
-    addr = None
+    # addr = None
     # addr = '<broadcast>'
-    # addr = '10.0.0.255'
+    addr = '192.168.0.255'
     server = socket.socket(
         socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
     server.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)

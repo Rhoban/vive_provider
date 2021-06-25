@@ -106,7 +106,7 @@ class Vive_provider:
             self.client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
             self.client.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
             self.client.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            self.client.bind(("", 37020))
+            self.client.bind(("", 44444))
 
         self.scanTrackers()            
             
@@ -136,7 +136,7 @@ class Vive_provider:
                 continue
             
             device_class = openvr.VRSystem().getTrackedDeviceClass(i)
-            serial_number = openvr.VRSystem().getStringTrackedDeviceProperty(i, openvr.Prop_SerialNumber_String).decode('UTF-8')
+            serial_number = openvr.VRSystem().getStringTrackedDeviceProperty(i, openvr.Prop_SerialNumber_String)
 
             if(device_class == openvr.TrackedDeviceClass_GenericTracker or device_class == openvr.TrackedDeviceClass_Controller):
                 if device_class == openvr.TrackedDeviceClass_Controller:

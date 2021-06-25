@@ -15,6 +15,8 @@ use the one from `misc/`.*
 
 ### Python
 
+In this repository python3.* must be used.
+
 You need to install the following dependencies:
 
     pip install numpy pybullet openvr protobuf
