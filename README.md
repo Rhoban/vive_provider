@@ -90,3 +90,12 @@ using directly the OpenVR API.
 ## Re-generate protobuf
 
 You can use `generate_protobuf.sh` to regenerate protobuf files
+
+## Vive trackers frame
+
+OpenVR output seems to be different with what is explained in the official guidelines. Thus, we referred
+to the `vr_tracker_vive_1_0.stl` file. The frame we provide is modified so that:
+
+- the origin point is at the bottom of the sensor, centered on the screw hole
+- `z` is upward
+- `x` is facing the board LED
