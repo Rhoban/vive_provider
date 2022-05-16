@@ -7,7 +7,6 @@ from datetime import datetime
 import socket
 import time
 from utils import *
-import sys
 from vive_provider import *
 
 collection = GlobalCollection()
@@ -15,10 +14,10 @@ collection = GlobalCollection()
 try:
     vp = ViveProvider()
 
-    # XXX: This should be parametrized
+    # XXX: This should be parametrized with args
     # addr = None
     # addr = '<broadcast>'
-    addr = "192.168.0.255"
+    address = "192.168.0.255"
     server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
     server.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
     server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -26,8 +25,9 @@ try:
     server.bind(("", VIVE_SERVER_PORT))
 
     pb_msg = GlobalMsg()
-    last = time.time()
-    sequence = 0
+    last_broadcast: float = time.time()
+    sequence: int = 0
+
     while True:
         # Collecting messages at maximum speed
         trackers = vp.getTrackersInfos()
@@ -38,11 +38,8 @@ try:
         collection.messages.extend([pb_msg])
 
         # Only sending network messages at ~100Hz
-        if time.time() - last > 0.01:
-            last = time.time()
-
-            # Converting message to bytes for network
-            trackersInfos = pb_msg.SerializeToString()
+        if time.time() - last_broadcast > 0.01:
+            last_broadcast = time.time()
 
             # Output debug infos
             print("---")
@@ -55,10 +52,11 @@ try:
                 print("  - roll: %g, pitch: %f, yaw: %g" % tuple(rpy))
             print()
 
-            if addr is not None:
-                bytes_sent = server.sendto(trackersInfos, (addr, 37020))
+            if address is not None:
+                bytes_sent = server.sendto(pb_msg.SerializeToString(), (address, 37020))
 
 except KeyboardInterrupt:
+    # Writing logs to binary file
     fname = datetime.now().strftime("%Y_%m_%d-%Hh%Mm%Ss") + "_vive.bin"
     print("Interrupted, saving the collection to %s ..." % fname)
     f = open("logs/" + fname, "wb")
