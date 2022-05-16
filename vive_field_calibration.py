@@ -4,24 +4,21 @@ from vive_provider import *
 from vive_bullet import BulletViewer
 from utils import rigid_transform_3D
 
-vp = Vive_provider(enableButtons=True)
+vp = ViveProvider(enableButtons=True)
 
 # Loading field positions to use for calibration
-fileName = 'fieldPositions.json'
-if len(sys.argv) > 1:
-    fileName = sys.argv[1]
-f = open(fileName, 'r')
+f = open(FIELD_POINTS_FILENAME, "r")
 field_positions = json.load(f)
 f.close()
-        
+
 # Creating bullet viewer and loading the field
 viewer = BulletViewer(vp)
-target = viewer.addUrdf('assets/target/robot.urdf')
+target = viewer.addUrdf("assets/target/robot.urdf")
 
 # Checking controller presence
-controllersInfos = vp.getControllersInfos(raw=True)
-if len(controllersInfos) != 1:
-    print('ERROR: Calibration should have exactly one controller (found %d)' % len(controllersInfos))
+controllers = vp.get_controllers_infos()
+if len(controllers) != 1:
+    print("ERROR: Calibration should have exactly one controller (found %d)" % len(controllers))
     exit()
 
 # Loop to retrieve the points
@@ -31,40 +28,30 @@ while failed:
     failed = False
     positions = []
     references = {}
+
     for field_position in field_positions:
-        print('Place tracker on position '+str(field_position)+', then press the button ')
+        print("Place tracker on position " + str(field_position) + ", then press the button ")
         viewer.setUrdfPosition(target, field_position)
 
         # Waiting for button to be released
-        while vp.getControllersInfos(raw=True)[0]['buttonPressed']:
+        while vp.get_controllers_infos()[0]["buttonPressed"]:
             time.sleep(0.01)
         # Waitng for button to be pressed
-        while not vp.getControllersInfos(raw=True)[0]['buttonPressed']:
+        while not vp.get_controllers_infos()[0]["buttonPressed"]:
             time.sleep(0.01)
 
-        pose = None
+        position = vp.get_controllers_infos()[0]["position"]
+
+        has_error: bool = False
         
-        # XXX: Uncomment to try to use tracker if available
-        # trackers = vp.getTrackersInfos(raw=True)['trackers']
-        # for entry in trackers:
-        #     if trackers[entry]['device_type'] == 'tracker':
-        #         pose = trackers[entry]['pose']
-
-        if pose is None:
-            pose = vp.getControllersInfos(raw=True)[0]['pose']
-
-        # print(pose[0], pose[1], pose[2])
-        position = pose[:3]
-
-        hasError = False
         # Checking references
-        infos = vp.getTrackersInfos(raw=True)
-        for reference in infos['references']:
-            matrix = infos['references'][reference]
+        infos = vp.get_tracker_infos(raw=True)
+        for reference in infos["references"]:
+            matrix = infos["references"][reference]
             if reference in references:
                 if not np.allclose(references[reference], matrix):
-                    print('! ERROR: References has moved!')
-                    hasError = True
+                    print("! ERROR: References has moved!")
+                    has_error = True
             else:
                 references[reference] = matrix
 
@@ -75,33 +62,32 @@ while failed:
 
             expected_dist = np.linalg.norm(np.array(other_field_position) - np.array(field_position))
             dist = np.linalg.norm(np.array(other_position) - np.array(position))
-            error = abs(dist-expected_dist)
+            error = abs(dist - expected_dist)
 
             if error > 0.07:
-                print('! ERROR: Expected distance is wrong (expected: %f m, got: %f m, error: %f m)!' % (expected_dist, dist, error))
-                vp.vibrate(vp.getControllersInfos(raw=True)[0]['serial_number'])
+                print(
+                    "! ERROR: Expected distance is wrong (expected: %f m, got: %f m, error: %f m)!"
+                    % (expected_dist, dist, error)
+                )
+                vp.vibrate(vp.get_controllers_infos()[0]["openvr_index"])
                 failed = True
-                hasError = True
-        if hasError:
+                has_error = True
+        if has_error:
             break
-                
+
         positions.append(position)
 
 # Computing worldToField matrix
-R, t = rigid_transform_3D(np.mat(positions), np.mat(field_positions))
-worldToField = R.copy()
-worldToField = np.hstack((worldToField, t))
-worldToField = np.vstack((worldToField, [0, 0, 0, 1]))
+T_field_world = rigid_transform_3D(np.array(positions), np.array(field_positions))
 
 # Adding field to reference to the calibration files
 data = {}
-data['worldToField'] = worldToField.tolist()
 for reference in references:
-    referenceToWorld = references[reference]
-    fieldToReference = np.linalg.inv(worldToField*referenceToWorld).tolist()
-    data[reference] = fieldToReference
+    T_world_reference = references[reference]
+    T_reference_field = np.linalg.inv(T_field_world @ T_world_reference).tolist()
+    data[reference] = T_reference_field
 
 # Writing the calibration file
-calibFile = open("calibFile.json", "w")
-calibFile.write(json.dumps(data))
-calibFile.close()
+calibration = open("calibration.json", "w")
+calibration.write(json.dumps(data))
+calibration.close()

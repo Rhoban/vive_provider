@@ -3,109 +3,111 @@ import math
 import numpy as np
 import pybullet as p
 from time import sleep
-from vive_provider import Vive_provider
+from vive_provider import ViveProvider
 from utils import convert_to_euler
+from transforms3d import quaternions
+
 
 class BulletViewer:
-    def __init__(self, vive):        
+    """
+    Handles the rendering of the 3D environment using pyBullet
+    """
+
+    def __init__(self, vive: ViveProvider):
         # Initialisation de pyBullet
         physicsClient = p.connect(p.GUI)
         p.setGravity(0, 0, -9.8)
+
+        # Loading the field
         field = p.loadURDF("assets/field/robot.urdf", [0, 0, -0.01])
 
-        self.vive = vive
-        self.trackers = {}
-        self.references = {}
-        self.physics = False
-        self.offset = None
-        self.texts= {}
+        # Vive Provider
+        self.vive: ViveProvider = vive
 
-        p.configureDebugVisualizer(p.COV_ENABLE_GUI,0)
-        p.configureDebugVisualizer(p.COV_ENABLE_SEGMENTATION_MARK_PREVIEW,0)
-        p.configureDebugVisualizer(p.COV_ENABLE_DEPTH_BUFFER_PREVIEW,0)
-        p.configureDebugVisualizer(p.COV_ENABLE_RGB_BUFFER_PREVIEW,0)
-        p.configureDebugVisualizer(p.COV_ENABLE_MOUSE_PICKING,1)
+        # Should we tick physics ?
+        self.physics: bool = False
 
-        infos = self.vive.getTrackersInfos()
+        # Mapping serial numbers to pyBullet object indexes (created on first encounter)
+        self.trackers: dict = {}
+        self.references: dict = {}
+        self.positions: dict = {}
+        self.texts = {}
 
-        for id in self.vive.trackers:
-            tracker = self.vive.trackers[id]
-            info = infos['trackers'][id]
-            startOrientation = p.getQuaternionFromEuler([0, 0, 0])
-            startPos = [0, 0, 0]
-            
-            asset = 'assets/tracker.urdf'
-            # print(info)
-            if info['device_type'] == 'controller':
-                asset = 'assets/controller.urdf'
-            tracker = p.loadURDF(asset, startPos, startOrientation)
-            self.trackers[id] = tracker
+        p.configureDebugVisualizer(p.COV_ENABLE_GUI, 0)
+        p.configureDebugVisualizer(p.COV_ENABLE_SEGMENTATION_MARK_PREVIEW, 0)
+        p.configureDebugVisualizer(p.COV_ENABLE_DEPTH_BUFFER_PREVIEW, 0)
+        p.configureDebugVisualizer(p.COV_ENABLE_RGB_BUFFER_PREVIEW, 0)
+        p.configureDebugVisualizer(p.COV_ENABLE_MOUSE_PICKING, 1)
 
-        for position in infos['tagged_positions']:
-            target = self.addUrdf('assets/target/robot.urdf')
-            self.setUrdfPosition(target, position)
+    def add_urdf(self, path: str):
+        """
+        Adds an URDF file to the scene
 
-        for id in self.vive.references:
-            reference = p.loadURDF('assets/lighthouse/robot.urdf', [0, 0, 0])
-            self.references[id] = reference
-    
-    def addUrdf(self, path):
+        :param str path: path to the URDF file
+        :return int: index of object in the pyBullet scene
+        """
         return p.loadURDF(path, [0, 0, 0])
 
-    def setUrdfPosition(self, urdf, position, orientation=[0, 0, 0]):
-        orientation = p.getQuaternionFromEuler([0, 0, 0])
-        p.resetBasePositionAndOrientation(urdf, position, orientation)
-
     def update(self):
-        infos = self.vive.getTrackersInfos()
+        """
+        Reads tracker infos and update the 3D object positions accordingly
+        """
+        infos = self.vive.get_tracker_infos()
 
-        for id in self.vive.trackers:
-            info = infos['trackers'][id]
-            m = info['pose_matrix']
-            position = np.array(m.T[3])[0][:3]
+        # Quaternions are represented x, y, z, w in pyBullet
+        def quaternions_flip(q):
+            w, x, y, z = q
+            return x, y, z, w
 
-            # if info['device_type'] == 'controller' and self.offset is None and np.linalg.norm(position)>0.5:
-            #     self.offset = position.copy()
-            #     print('Defining')
-            #     print(self.offset)
+        # Updating tagged position arrows
+        for index in range(len(infos["tagged_positions"])):
+            position = infos["tagged_positions"][index]
+
+            if index not in self.positions:
+                self.positions[index] = self.add_urdf("assets/target/robot.urdf")
+
+            orientation = p.getQuaternionFromEuler([0, 0, 0])
+            p.resetBasePositionAndOrientation(self.positions[index], position, orientation)
+        # XXX: What happens if a position disapear ?
+
+        # Updating tracker positions
+        for serial_number in infos["trackers"]:
+            info = infos["trackers"][serial_number]
             
-            # if self.offset is not None:
-            #     position -= self.offset
+            if serial_number not in self.trackers:
+                startOrientation = p.getQuaternionFromEuler([0, 0, 0])
+                startPos = [0, 0, 0]
 
-            orientation = m[:3,:3]
-            euler = convert_to_euler(orientation)
-            orientation = p.getQuaternionFromEuler(euler)
+                asset = "assets/tracker.urdf"
+                if info["device_type"] == "controller":
+                    asset = "assets/controller.urdf"
+                tracker = p.loadURDF(asset, startPos, startOrientation)
 
-            # fov, aspect, nearplane, farplane = 60, 1.0, 0.01, 100
-            # projection_matrix = p.computeProjectionMatrixFOV(fov, aspect, nearplane, farplane)
-            # tp = position.copy()
-            # tp[2] += 0.1
-            # view_matrix = p.computeViewMatrix(tp, tp+[-math.sin(euler[2]),math.cos(euler[2]),0], [0, 0, 1])
-            # img = p.getCameraImage(1000, 1000, view_matrix, projection_matrix)
+                self.trackers[serial_number] = tracker
 
-            # c = position.copy()
-            #  p.resetDebugVisualizerCamera(0.2, cameraYaw=euler[2]*180/math.pi, cameraPitch=-120+euler[0]*180.0/math.pi, ,cameraTargetPosition=c)
+            p.resetBasePositionAndOrientation(
+                self.trackers[serial_number], info["position"], quaternions_flip(info["orientation"])
+            )
 
-            # print(position)
-            p.resetBasePositionAndOrientation(self.trackers[id], position, orientation)
-        
-        for id in self.vive.references:
-            m = infos['references_corrected'][id]
-            position = np.array(m.T[3])[0][:3]
-            orientation = m[:3,:3]
-            euler = convert_to_euler(orientation)
-            orientation = p.getQuaternionFromEuler(euler)
+        # Updating reference lighthouses
+        for serial_number in infos["references"]:
+            if serial_number not in self.references:
+                self.references[serial_number] = p.loadURDF("assets/lighthouse/robot.urdf", [0, 0, 0])
+                self.texts[serial_number] = p.addUserDebugText(serial_number, position)
 
-            if id not in self.texts:
-                self.texts[id] = p.addUserDebugText(id, position)
-            p.resetBasePositionAndOrientation(self.references[id], position, orientation)
+            # We draw using the references corrected using calibration
+            info = infos["references_corrected"][serial_number]
+            p.resetBasePositionAndOrientation(
+                self.references[serial_number], info["position"], quaternions_flip(info["orientation"])
+            )
 
-    
     def execute(self):
-        # Simulation en temps reel
+        """
+        Starts the rendering
+        """
         p.setRealTimeSimulation(1)
-        dt = 0.001
-        t = 0
+        dt: float = 0.001
+        t: float = 0
         p.setPhysicsEngineParameter(fixedTimeStep=dt)
 
         while True:
@@ -116,8 +118,9 @@ class BulletViewer:
                 t += dt
                 p.stepSimulation()
 
-if __name__ == '__main__':
-    vive = Vive_provider()
+
+if __name__ == "__main__":
+    vive = ViveProvider()
     viewer = BulletViewer(vive)
     viewer.physics = False
     viewer.execute()

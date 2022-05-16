@@ -2,22 +2,22 @@
 import json, sys
 from vive_provider import *
 from vive_bullet import BulletViewer
-from utils import rigid_transform_3D
 
 # Erasing tagged positions
 f = open('taggedPositions.json', 'w')
 f.write(json.dumps([]))
 f.close()
 
-vp = Vive_provider(enableButtons=True)
+# Create a Vive Povider
+vp = ViveProvider(enable_buttons=True)
         
 # Creating bullet viewer and loading the field
 viewer = BulletViewer(vp)
 
 # Checking controller presence
-controllersInfos = vp.getControllersInfos(raw=True)
-if len(controllersInfos) != 1:
-    print('ERROR: Tagging positions should have exactly one controller (found %d)' % len(controllersInfos))
+controllers = vp.get_controllers_infos()
+if len(vp.get_controllers_infos()) != 1:
+    print('ERROR: Tagging positions should have exactly one controller (found %d)' % len(controllers))
     exit()
 
 # Loop to retrieve the points
@@ -25,22 +25,22 @@ positions = []
 while True:
     positions = []
     references = {}
-    buttonState = 0
+    button_state = 0
     print('Place the controller on tag position and press the button')
     while True:
         viewer.update()
 
-        buttonPressed = vp.getControllersInfos()[0]['buttonPressed']
-        if buttonState == 0:
-            if buttonPressed:
-                buttonState += 1
-        elif buttonState == 1:
-            if not buttonPressed:
-                buttonState += 1
-        elif buttonState == 2:
-            buttonState = 0
+        button_pressed = vp.get_controllers_infos()[0]['button_pressed']
+        if button_state == 0:
+            if button_pressed:
+                button_state += 1
+        elif button_state == 1:
+            if not button_pressed:
+                button_state += 1
+        elif button_state == 2:
+            button_state = 0
 
-            pose = vp.getControllersInfos()[0]['pose']
+            pose = vp.get_controllers_infos(raw=False)[0]['pose']
             position = pose[:3]
 
             target = viewer.addUrdf('assets/target/robot.urdf')
@@ -49,11 +49,11 @@ while True:
             positions.append(position)
 
             for k in range(len(positions)):
-                vp.vibrate(vp.getControllersInfos(raw=True)[0]['serial_number'], 200)
+                vp.vibrate(vp.get_controllers_infos(raw=True)[0]['openvr_index'], 200)
                 time.sleep(0.25)
             print('Tagged %d positions' % len(positions))
 
-            f = open('taggedPositions.json', 'w')
+            f = open('tagged_positions.json', 'w')
             f.write(json.dumps(positions))
             f.close()
 

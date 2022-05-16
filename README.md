@@ -54,11 +54,11 @@ After lunching steam, you might need to kill the process vrcompositor.
 
 ### Calibration
 
-First, you can edit `fieldPositions.json` to setup your ground truth positions. Then, run
+First, you can edit `field_points.json` to setup your ground truth positions. Then, run
 `vive_field_calibration.py`. You need to have a paired controller then, and to go to each
 positions one by one (indicated in the 3D viewer by an arrow) to tag them.
 
-The `fieldPositions.json` should contain at least 3 points, and formatted as following:
+The `field_points.json` should contain at least 3 points, and formatted as following:
 
 ```json
 [
