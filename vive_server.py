@@ -46,7 +46,7 @@ try:
 
             # Output debug infos
             print("---")
-            print("* Tracking %d devices" % len(trackers["trackers"]))
+            print("* Tracking %d devices (%d detections made)" % (len(trackers["trackers"]), len(collection)))
             for id in trackers["trackers"]:
                 p = trackers["trackers"][id]["pose"]
                 rpy = euler.mat2euler(trackers["trackers"][id]["pose_matrix"]) * 180.0 / math.pi
