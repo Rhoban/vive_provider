@@ -3,11 +3,16 @@
 from vive_pb2 import *
 from transforms3d import euler
 
+import argparse
 from datetime import datetime
 import socket
 import time
 from utils import *
 from vive_provider import *
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--broadcast", "-b", type=str, default="192.168.0.255")
+args = parser.parse_args()
 
 collection = GlobalCollection()
 
@@ -15,9 +20,7 @@ try:
     vp = ViveProvider()
 
     # XXX: This should be parametrized with args
-    # addr = None
-    # addr = '<broadcast>'
-    address = "192.168.0.255"
+    address = args.broadcast
     server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
     server.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
     server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)

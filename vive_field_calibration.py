@@ -1,13 +1,17 @@
 #!/usr/bin/env python
-import json, sys
+import json, argparse
 from vive_provider import *
 from vive_bullet import BulletViewer
 from utils import rigid_transform_3D
 
-vp = ViveProvider(enableButtons=True)
+parser = argparse.ArgumentParser()
+parser.add_argument("--points", "-p", type=str, default=FIELD_POINTS_FILENAME)
+args = parser.parse_args()
+
+vp = ViveProvider(enable_buttons=True)
 
 # Loading field positions to use for calibration
-f = open(FIELD_POINTS_FILENAME, "r")
+f = open(args.points, "r")
 field_positions = json.load(f)
 f.close()
 

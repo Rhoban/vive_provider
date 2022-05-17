@@ -70,8 +70,7 @@ The `field_points.json` should contain at least 3 points, and formatted as follo
 ]
 ```
 
-Alternatively, you can pass an argument to `vive_field_calibration.py` which is the json
-file path to the field positions.
+Alternatively, you can pass a file path to `vive_field_calibration.py` with `-p my_field_points.json`.
 
 If a consistency error occurs, the joystick will vibrate and you should start the calibration
 over.
@@ -85,6 +84,9 @@ controllers positions.
 
 The script `vive_server.py` is a server that broadcasts the positions through the network
 using UDP and protobuf definition from `proto/vive.proto`.
+
+**Note: to avoid spamming, we broadcast UDP messages to `192.168.0.255` by default, this can be changed
+using `-b` flag, you can pass `<broadcast>` to send the packets to all possible addresses**
 
 To check, you can also run the `vive_bullet_client.py` that listens to the network instead of
 using directly the OpenVR API.
