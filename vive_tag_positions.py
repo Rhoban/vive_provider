@@ -3,8 +3,8 @@ import json, sys
 from vive_provider import *
 from vive_bullet import BulletViewer
 
-# Erasing tagged positions
-f = open("taggedPositions.json", "w")
+print("Erasing previously tagged positions...")
+f = open(TAGGED_POSITIONS_FILENAME, "w")
 f.write(json.dumps([]))
 f.close()
 
@@ -31,6 +31,8 @@ while True:
         viewer.update()
 
         button_pressed = vp.get_controllers_infos()[0]["button_pressed"]
+
+        # Waiting for button to be relased and then pressed without blocking the viewer
         if button_state == 0:
             if button_pressed:
                 button_state += 1
@@ -51,8 +53,8 @@ while True:
             for k in range(len(positions)):
                 vp.vibrate(vp.get_controllers_infos(raw=True)[0]["openvr_index"], 200)
                 time.sleep(0.25)
-            print("Tagged %d positions" % len(positions))
+            print("Tagged %d positions, updating %s" % (len(positions), TAGGED_POSITIONS_FILENAME))
 
-            f = open("tagged_positions.json", "w")
+            f = open(TAGGED_POSITIONS_FILENAME, "w")
             f.write(json.dumps(positions))
             f.close()
