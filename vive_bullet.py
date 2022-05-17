@@ -95,8 +95,8 @@ class BulletViewer:
                 self.references[serial_number] = p.loadURDF("assets/lighthouse/robot.urdf", [0, 0, 0])
                 self.texts[serial_number] = p.addUserDebugText(serial_number, position)
 
-            # We draw using the references corrected using calibration
-            info = infos["references_corrected"][serial_number]
+            # We draw using the references from the calibration
+            info = infos["calibration"][serial_number]
             p.resetBasePositionAndOrientation(
                 self.references[serial_number], info["position"], quaternions_flip(info["orientation"])
             )

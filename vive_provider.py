@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-import sys
+import copy
 import time
 import openvr
 import utils
@@ -28,10 +28,24 @@ class Calibration:
         if os.path.exists(calibration_file_path):
             with open(calibration_file_path, "r") as calibration:
                 self.calibration = json.loads(calibration.read())
-            for id in self.calibration:
-                self.calibration[id] = np.mat(self.calibration[id])
+            for serial_number in self.calibration:
+                self.calibration[serial_number] = np.array(self.calibration[serial_number])
         else:
             print("! WARNING: Calibration file not found")
+
+    def reference_calibration(self, serial_number: str):
+        """
+        Returns the transformation (T_world_reference) of the given reference if it exists
+        in calibration, else None
+
+        :param str serial_number: the reference's serial number
+        :return ?np.array: frame
+        """
+
+        if serial_number in self.calibration:
+            return self.calibration[serial_number]
+
+        return None
 
     def transform_frame(self, references: dict, T_world_tracker: np.array) -> np.array:
         """
@@ -49,10 +63,10 @@ class Calibration:
         frames: list = []
 
         # Using reference lighthouses to transform tracker to the field
-        for id in references:
-            if id in self.calibration:
-                T_world_reference = references[id]
-                T_reference_field = self.calibration[id]
+        for serial_number in references:
+            if serial_number in self.calibration:
+                T_world_reference = references[serial_number]
+                T_reference_field = self.calibration[serial_number]
 
                 T_reference_tracker = utils.frame_inv(T_world_reference) * T_world_tracker
                 T_field_tracker = utils.frame_inv(T_reference_field) * T_reference_tracker
@@ -192,11 +206,12 @@ class ViveProvider:
                     print(f"Unknown class: {device_class}")
 
         # References corrected in calibrated frame
-        infos["references_corrected"] = {}
+        infos["calibration"] = {}
         for serial_number in infos["references"]:
-            T_world_reference = self.calibration.transform_frame(infos["references"], infos["references"][serial_number])
-            infos["references_corrected"][serial_number]["position"] = T_world_reference[:3, 3]
-            infos["references_corrected"][serial_number]["orientation"] = quaternions.mat2quat(T_world_reference[:3, :3])
+            T_world_reference = self.calibration.reference_calibration(serial_number)
+            infos["calibration"][serial_number]["position"] = T_world_reference[:3, 3]
+            infos["calibration"][serial_number]["orientation"] = quaternions.mat2quat(T_world_reference[:3, :3])
+
         if not raw:
             self.calibration.check_consistency(infos["references"])
 
@@ -235,7 +250,7 @@ class ViveProvider:
                 pose.vAngularVelocity[2],
             ]
 
-            if pose.bPoseIsValid or self.last_infos is None:
+            if pose.bPoseIsValid or self.last_infos is None or serial not in self.last_infos["trackers"]:
                 entry["vive_timestamp_last_tracked"] = infos["vive_timestamp"]
                 entry["time_since_last_tracked"] = 0
             else:
@@ -254,7 +269,12 @@ class ViveProvider:
 
             infos["trackers"][serial_number] = entry
 
-        self.last_infos = infos.copy()
+        # Keeping last infos, if a tracker is not present, keeping the previous one
+        last_infos = copy.deepcopy()
+        if self.last_infos:
+            last_infos["trackers"] = {**self.last_infos["trackers"], **last_infos["trackers"]}
+
+        self.last_infos = last_infos
 
         return infos
 
