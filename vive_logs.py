@@ -19,6 +19,18 @@ class ViveLog:
         for message in self.collection.messages:
             self.sorted_dict[message.time_since_epoch] = message
 
+    def get_tagged_positions(self) -> list:
+        """
+        Retrieve tagged positions from t his log
+
+        :return list: tagged positions
+        """        
+        positions:list = []
+        for position in self.collection.tagged_positions:
+            positions.append([position.x, position.y, position.z])
+
+        return positions
+
     def get_first_last_timestamps(self) -> tuple:
         """
         Returns first and mast timestamps (UTC)
