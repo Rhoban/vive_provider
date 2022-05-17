@@ -56,7 +56,7 @@ try:
             print()
 
             if address is not None:
-                bytes_sent = server.sendto(pb_msg.SerializeToString(), (address, 37020))
+                bytes_sent = server.sendto(pb_msg.SerializeToString(), (address, VIVE_SERVER_PORT))
 
 except KeyboardInterrupt:
     # Writing logs to binary file
