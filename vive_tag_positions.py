@@ -21,40 +21,41 @@ if len(vp.get_controllers_infos()) != 1:
     exit()
 
 # Loop to retrieve the points
-positions = []
+positions: list = []
+references: dict = {}
+button_state: int = 0
+print("Place the controller on tag position and press the button")
+
 while True:
-    positions = []
-    references = {}
-    button_state = 0
-    print("Place the controller on tag position and press the button")
-    while True:
-        viewer.update()
+    viewer.update()
 
-        button_pressed = vp.get_controllers_infos()[0]["button_pressed"]
+    button_pressed = vp.get_controllers_infos()[0]["button_pressed"]
 
-        # Waiting for button to be relased and then pressed without blocking the viewer
-        if button_state == 0:
-            if button_pressed:
-                button_state += 1
-        elif button_state == 1:
-            if not button_pressed:
-                button_state += 1
-        elif button_state == 2:
-            button_state = 0
+    # Waiting for button to be relased and then pressed without blocking the viewer
+    if button_state == 0:
+        if button_pressed:
+            button_state += 1
+    elif button_state == 1:
+        if not button_pressed:
+            button_state += 1
+    elif button_state == 2:
+        button_state = 0
 
-            pose = vp.get_controllers_infos(raw=False)[0]["pose"]
-            position = pose[:3]
+        pose = vp.get_controllers_infos(raw=False)[0]["pose"]
+        position = pose[:3]
 
-            target = viewer.addUrdf("assets/target/robot.urdf")
-            viewer.setUrdfPosition(target, position)
+        # Showing the position in the viewer
+        target = viewer.addUrdf("assets/target/robot.urdf")
+        viewer.setUrdfPosition(target, position)
 
-            positions.append(position)
+        positions.append(position)
 
-            for k in range(len(positions)):
-                vp.vibrate(vp.get_controllers_infos(raw=True)[0]["openvr_index"], 200)
-                time.sleep(0.25)
-            print("Tagged %d positions, updating %s" % (len(positions), TAGGED_POSITIONS_FILENAME))
+        # Vibration indicates the point was added
+        for k in range(len(positions)):
+            vp.vibrate(vp.get_controllers_infos(raw=True)[0]["openvr_index"], 200)
+            time.sleep(0.25)
 
-            f = open(TAGGED_POSITIONS_FILENAME, "w")
-            f.write(json.dumps(positions))
-            f.close()
+        print("Tagged %d positions, updating %s" % (len(positions), TAGGED_POSITIONS_FILENAME))
+        f = open(TAGGED_POSITIONS_FILENAME, "w")
+        f.write(json.dumps(positions))
+        f.close()

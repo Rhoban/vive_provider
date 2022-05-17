@@ -27,7 +27,7 @@ try:
     server.settimeout(0.2)
     server.bind(("", VIVE_SERVER_PORT))
 
-    pb_msg = GlobalMsg()
+    pb_msg: GlobalMsg = GlobalMsg()
     last_broadcast: float = time.time()
     sequence: int = 0
 
