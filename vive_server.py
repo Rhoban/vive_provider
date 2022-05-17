@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from gc import collect
 from vive_pb2 import *
 from transforms3d import euler
 
@@ -40,8 +41,12 @@ try:
         sequence += 1
         collection.messages.extend([pb_msg])
 
+        if len(collection.tagged_positions) == 0:
+            tagged_positions_to_message(trackers, collection)
+
         # Only sending network messages at ~100Hz
         if time.time() - last_broadcast > 0.01:
+            tagged_positions_to_message(trackers, pb_msg)
             last_broadcast = time.time()
 
             # Output debug infos
@@ -57,6 +62,8 @@ try:
 
             if address is not None:
                 bytes_sent = server.sendto(pb_msg.SerializeToString(), (address, VIVE_SERVER_PORT))
+
+            pb_msg.ClearField("tagged_positions")
 
 except KeyboardInterrupt:
     # Writing logs to binary file

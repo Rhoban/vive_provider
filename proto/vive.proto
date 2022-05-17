@@ -87,4 +87,5 @@ message GlobalMsg {
 
 message GlobalCollection {
   repeated GlobalMsg messages = 1;
+  repeated Vector3d tagged_positions = 2;
 }

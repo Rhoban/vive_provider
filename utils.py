@@ -52,13 +52,21 @@ def tracker_infos_to_GlobalMsg(tracker_infos: dict) -> GlobalMsg:
         pb_msg.trackers[-1].serial_number = t["serial_number"]
         pb_msg.trackers[-1].device_type = t["device_type"]
 
+    return pb_msg
+
+
+def tagged_positions_to_message(tracker_infos: dict, pb_msg) -> None:
+    """
+    Appends tagged positions from tracker_infos to given protobuf message
+
+    :param dict tracker_infos: tracker informations from the vive
+    :param pb_msg: protobuf message to append the positions
+    """
     for p in tracker_infos["tagged_positions"]:
         pb_msg.tagged_positions.add()
         pb_msg.tagged_positions[-1].x = p[0]
         pb_msg.tagged_positions[-1].y = p[1]
         pb_msg.tagged_positions[-1].z = p[2]
-
-    return pb_msg
 
 
 def GlobalMsg_to_tracker_infos(data: str) -> dict:
