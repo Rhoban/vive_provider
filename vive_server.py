@@ -8,7 +8,7 @@ import argparse
 from datetime import datetime
 import socket
 import time
-from utils import *
+from vive_utils import *
 from vive_provider import *
 
 parser = argparse.ArgumentParser()

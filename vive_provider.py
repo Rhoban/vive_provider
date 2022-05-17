@@ -2,12 +2,12 @@
 import copy
 import time
 import openvr
-import utils
+import vive_utils
 import math
 import sys
 import json
 import numpy as np
-from utils import *
+from vive_utils import *
 import numpy.linalg as linalg
 from functools import reduce
 import os
@@ -68,7 +68,7 @@ class Calibration:
                 T_world_reference = references[serial_number]
                 T_field_reference = self.calibration[serial_number]
 
-                T_reference_tracker = utils.frame_inv(T_world_reference) @ T_world_tracker
+                T_reference_tracker = vive_utils.frame_inv(T_world_reference) @ T_world_tracker
                 T_field_tracker = T_field_reference @ T_reference_tracker
 
                 frames.append(T_field_tracker)

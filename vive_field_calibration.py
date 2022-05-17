@@ -2,7 +2,7 @@
 import json, argparse
 from vive_provider import *
 from vive_bullet import BulletViewer
-from utils import rigid_transform_3D
+from vive_utils import rigid_transform_3D
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--points", "-p", type=str, default=FIELD_POINTS_FILENAME)
