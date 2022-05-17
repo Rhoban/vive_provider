@@ -35,14 +35,14 @@ class Calibration:
 
     def reference_calibration(self, serial_number: str):
         """
-        Returns the transformation (T_world_reference) of the given reference if it exists
+        Returns the transformation (T_reference_field) of the given reference if it exists
         in calibration, else None
 
         :param str serial_number: the reference's serial number
         :return ?np.array: frame
         """
 
-        if serial_number in self.calibration:
+        if self.calibration is not None and serial_number in self.calibration:
             return self.calibration[serial_number]
 
         return None
@@ -52,8 +52,8 @@ class Calibration:
         Transform a frame to the calibration frame
 
         :param dict references: dict mapping references to the T_world_reference frame
-        :param np.array tracker_to_world: _description_
-        :return np.array: _description_
+        :param np.array T_world_tracker: obtained transforamtion
+        :return np.array: T_field_tracker
         """
         if self.calibration is None:
             # No calibration, we keep the input as it is
@@ -66,10 +66,10 @@ class Calibration:
         for serial_number in references:
             if serial_number in self.calibration:
                 T_world_reference = references[serial_number]
-                T_reference_field = self.calibration[serial_number]
+                T_field_reference = self.calibration[serial_number]
 
-                T_reference_tracker = utils.frame_inv(T_world_reference) * T_world_tracker
-                T_field_tracker = utils.frame_inv(T_reference_field) * T_reference_tracker
+                T_reference_tracker = utils.frame_inv(T_world_reference) @ T_world_tracker
+                T_field_tracker = T_field_reference @ T_reference_tracker
 
                 frames.append(T_field_tracker)
 
@@ -111,10 +111,10 @@ class Calibration:
                     #      relatively; the world is an arbitrary frame (if the reference frame changes w.r.t the
                     #      world and the tracker change the same way it doesn't affect the final frame)
                     # XXX: We could use norms and angular difference here instead
-                    if not np.allclose(expected_transformation.T[3, :3], transformation.T[3, :3], atol=0.15):
-                        print("! ERROR: Translation from %s to %s is not consistent with calibration" % (keyA, keyB))
-                    elif not np.allclose(expected_transformation[:3, :3], transformation[:3, :3], atol=0.05):
-                        print("! ERROR: Rotation from %s to %s is not consistent with calibration" % (keyA, keyB))
+                    # if not np.allclose(expected_transformation.T[3, :3], transformation.T[3, :3], atol=0.15):
+                    #     print("! ERROR: Translation from %s to %s is not consistent with calibration" % (keyA, keyB))
+                    # elif not np.allclose(expected_transformation[:3, :3], transformation[:3, :3], atol=0.05):
+                    #     print("! ERROR: Rotation from %s to %s is not consistent with calibration" % (keyA, keyB))
 
 
 class ViveProvider:
@@ -198,10 +198,10 @@ class ViveProvider:
                     infos["references"][serial_number] = tracker_to_matrix(pose)
                 elif device_class == openvr.TrackedDeviceClass_Controller:
                     # Controller (joystick)
-                    trackers.append(serial_number, "controller", pose, index)
+                    trackers.append((serial_number, "controller", pose, index))
                 elif device_class == openvr.TrackedDeviceClass_GenericTracker:
                     # Generic tracker
-                    trackers.append(serial_number, "tracker", pose, index)
+                    trackers.append((serial_number, "tracker", pose, index))
                 else:
                     print(f"Unknown class: {device_class}")
 
@@ -209,8 +209,12 @@ class ViveProvider:
         infos["calibration"] = {}
         for serial_number in infos["references"]:
             T_world_reference = self.calibration.reference_calibration(serial_number)
-            infos["calibration"][serial_number]["position"] = T_world_reference[:3, 3]
-            infos["calibration"][serial_number]["orientation"] = quaternions.mat2quat(T_world_reference[:3, :3])
+
+            if T_world_reference is not None:
+                infos["calibration"][serial_number] = {
+                    "position": T_world_reference[:3, 3],
+                    "orientation": quaternions.mat2quat(T_world_reference[:3, :3]),
+                }
 
         if not raw:
             self.calibration.check_consistency(infos["references"])
@@ -250,7 +254,7 @@ class ViveProvider:
                 pose.vAngularVelocity[2],
             ]
 
-            if pose.bPoseIsValid or self.last_infos is None or serial not in self.last_infos["trackers"]:
+            if pose.bPoseIsValid or self.last_infos is None or serial_number not in self.last_infos["trackers"]:
                 entry["vive_timestamp_last_tracked"] = infos["vive_timestamp"]
                 entry["time_since_last_tracked"] = 0
             else:
@@ -269,12 +273,11 @@ class ViveProvider:
 
             infos["trackers"][serial_number] = entry
 
-        # Keeping last infos, if a tracker is not present, keeping the previous one
-        last_infos = copy.deepcopy()
-        if self.last_infos:
-            last_infos["trackers"] = {**self.last_infos["trackers"], **last_infos["trackers"]}
+        if self.last_infos is not None:
+            infos["trackers"] = {**self.last_infos["trackers"], **infos["trackers"]}
 
-        self.last_infos = last_infos
+        # Keeping last infos, if a tracker is not present, keeping the previous one
+        self.last_infos = copy.deepcopy(infos)
 
         return infos
 
@@ -297,6 +300,6 @@ class ViveProvider:
         :return list: list of dict (controller-type trackers)
         """
         trackers = self.get_tracker_infos(raw)["trackers"]
-        controllers = filter(lambda entry: entry["device_type"] == "controller", trackers)
+        controllers = filter(lambda entry: entry["device_type"] == "controller", trackers.values())
 
         return list(controllers)

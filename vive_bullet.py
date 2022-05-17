@@ -4,7 +4,6 @@ import numpy as np
 import pybullet as p
 from time import sleep
 from vive_provider import ViveProvider
-from utils import convert_to_euler
 from transforms3d import quaternions
 
 
@@ -39,7 +38,7 @@ class BulletViewer:
         p.configureDebugVisualizer(p.COV_ENABLE_RGB_BUFFER_PREVIEW, 0)
         p.configureDebugVisualizer(p.COV_ENABLE_MOUSE_PICKING, 1)
 
-    def add_urdf(self, path: str):
+    def add_urdf(self, path: str) -> int:
         """
         Adds an URDF file to the scene
 
@@ -47,6 +46,19 @@ class BulletViewer:
         :return int: index of object in the pyBullet scene
         """
         return p.loadURDF(path, [0, 0, 0])
+
+    def set_urdf_pose(self, urdf: int, position: list, orientation=None) -> None:
+        """
+        Sets the pose of an object
+
+        :param int urdf: the object identifier
+        :param list position:
+        :param _type_ orientation: orientation, if None is given it will be 0, defaults to None
+        """
+        if orientation is None:
+            orientation = p.getQuaternionFromEuler([0, 0, 0])
+
+        p.resetBasePositionAndOrientation(urdf, position, orientation)
 
     def update(self):
         """
@@ -66,8 +78,7 @@ class BulletViewer:
             if index not in self.positions:
                 self.positions[index] = self.add_urdf("assets/target/robot.urdf")
 
-            orientation = p.getQuaternionFromEuler([0, 0, 0])
-            p.resetBasePositionAndOrientation(self.positions[index], position, orientation)
+            self.set_urdf_pose(self.positions[index], position)
         # XXX: What happens if a position disapear ?
 
         # Updating tracker positions
@@ -90,16 +101,23 @@ class BulletViewer:
             )
 
         # Updating reference lighthouses
-        for serial_number in infos["references"]:
-            if serial_number not in self.references:
-                self.references[serial_number] = p.loadURDF("assets/lighthouse/robot.urdf", [0, 0, 0])
-                self.texts[serial_number] = p.addUserDebugText(serial_number, position)
+        if "references" in infos:
+            for serial_number in infos["references"]:
+                if serial_number not in self.references:
+                    self.references[serial_number] = p.loadURDF("assets/lighthouse/robot.urdf", [0, 0, 0])
 
-            # We draw using the references from the calibration
-            info = infos["calibration"][serial_number]
-            p.resetBasePositionAndOrientation(
-                self.references[serial_number], info["position"], quaternions_flip(info["orientation"])
-            )
+                # We draw using the references from the calibration
+                if serial_number in infos["calibration"]:
+                    info = infos["calibration"][serial_number]
+                else:
+                    info = infos["references"][serial_number]
+
+                p.resetBasePositionAndOrientation(
+                    self.references[serial_number], info["position"], quaternions_flip(info["orientation"])
+                )
+
+                if serial_number not in self.texts:
+                    self.texts[serial_number] = p.addUserDebugText(serial_number, info["position"])
 
     def execute(self):
         """

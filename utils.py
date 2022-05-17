@@ -81,10 +81,11 @@ def GlobalMsg_to_tracker_infos(data: str) -> dict:
         entry = {}
         entry["openvr_index"] = tracker.tracker_idx
         entry["time_since_last_tracked"] = tracker.time_since_last_tracked
-        entry["pose"] = [0, 0, 0, 0, 0, 0, 0]
-        entry["position"][0] = tracker.position.x
-        entry["position"][1] = tracker.position.y
-        entry["position"][2] = tracker.position.z
+        entry["position"] = [0, 0, 0]
+        entry["position"][0] = tracker.pos.x
+        entry["position"][1] = tracker.pos.y
+        entry["position"][2] = tracker.pos.z
+        entry["orientation"] = [0, 0, 0, 0]
         entry["orientation"][0] = tracker.orientation.qw
         entry["orientation"][1] = tracker.orientation.qx
         entry["orientation"][2] = tracker.orientation.qy
@@ -222,8 +223,8 @@ def average_transforms(frameA: np.array, frameB: np.array, alpha: float = 0.5) -
     axis, angle = axangles.mat2axangle(delta)
     frame[:3, :3] = axangles.axangle2mat(axis, angle * alpha) @ RA
 
-    posA = np.array(frameA[:3, 3].T)[0]
-    posB = np.array(frameB[:3, 3].T)[0]
+    posA = frameA[:3, 3]
+    posB = frameB[:3, 3]
     frame[:3, 3] = posA + alpha * (posB - posA)
 
     return frame

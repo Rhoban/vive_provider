@@ -45,8 +45,8 @@ while True:
         position = pose[:3]
 
         # Showing the position in the viewer
-        target = viewer.addUrdf("assets/target/robot.urdf")
-        viewer.setUrdfPosition(target, position)
+        target = viewer.add_urdf("assets/target/robot.urdf")
+        viewer.set_urdf_pose(target, position)
 
         positions.append(position)
 
@@ -57,5 +57,5 @@ while True:
 
         print("Tagged %d positions, updating %s" % (len(positions), TAGGED_POSITIONS_FILENAME))
         f = open(TAGGED_POSITIONS_FILENAME, "w")
-        f.write(json.dumps(positions))
+        f.write(json.dumps(positions, indent=4))
         f.close()

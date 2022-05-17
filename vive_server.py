@@ -33,9 +33,9 @@ try:
 
     while True:
         # Collecting messages at maximum speed
-        trackers = vp.getTrackersInfos()
+        trackers = vp.get_tracker_infos()
         pb_msg.Clear()
-        pb_msg = tracker_infos_to_GlobalMsg(trackers, sequence)
+        pb_msg = tracker_infos_to_GlobalMsg(trackers)
         pb_msg.seq = sequence
         sequence += 1
         collection.messages.extend([pb_msg])
@@ -46,10 +46,10 @@ try:
 
             # Output debug infos
             print("---")
-            print("* Tracking %d devices (%d detections made)" % (len(trackers["trackers"]), len(collection)))
+            print("* Tracking %d devices (%d detections made)" % (len(trackers["trackers"]), len(collection.messages)))
             for id in trackers["trackers"]:
-                p = trackers["trackers"][id]["pose"]
-                rpy = euler.mat2euler(trackers["trackers"][id]["pose_matrix"]) * 180.0 / math.pi
+                p = trackers["trackers"][id]["position"]
+                rpy = euler.quat2euler(trackers["trackers"][id]["orientation"])
                 print("- %s (%s)" % (id, trackers["trackers"][id]["device_type"]))
                 print("  - x: %g, y: %g, z: %g" % (p[0], p[1], p[2]))
                 print("  - roll: %g, pitch: %f, yaw: %g" % tuple(rpy))

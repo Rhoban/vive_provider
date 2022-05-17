@@ -17,7 +17,7 @@ f.close()
 
 # Creating bullet viewer and loading the field
 viewer = BulletViewer(vp)
-target = viewer.addUrdf("assets/target/robot.urdf")
+target = viewer.add_urdf("assets/target/robot.urdf")
 
 # Checking controller presence
 controllers = vp.get_controllers_infos()
@@ -35,7 +35,7 @@ while failed:
 
     for field_position in field_positions:
         print("Place tracker on position " + str(field_position) + ", then press the button ")
-        viewer.setUrdfPosition(target, field_position)
+        viewer.set_urdf_pose(target, field_position)
 
         # Waiting for button to be released
         while vp.get_controllers_infos()[0]["buttonPressed"]:
@@ -88,10 +88,10 @@ T_field_world = rigid_transform_3D(np.array(positions), np.array(field_positions
 data = {}
 for reference in references:
     T_world_reference = references[reference]
-    T_reference_field = np.linalg.inv(T_field_world @ T_world_reference).tolist()
-    data[reference] = T_reference_field
+    T_field_reference = (T_field_world @ T_world_reference).tolist()
+    data[reference] = T_field_reference
 
 # Writing the calibration file
 calibration = open("calibration.json", "w")
-calibration.write(json.dumps(data))
+calibration.write(json.dumps(data, indent=4))
 calibration.close()
