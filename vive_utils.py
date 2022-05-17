@@ -19,12 +19,14 @@ CALIBRATION_FILENAME: str = "calibration.json"
 TAGGED_POSITIONS_FILENAME: str = "tagged_positions.json"
 
 # Transformation from camera frame to vive frame
-T_vive_camera = np.array([
-    [ 0,  0, 1, 2.5e-2],
-    [-1,  0, 0,      0],
-    [ 0, -1, 0, -3e-2]
-    [0, 0, 0, 1]
-])
+T_vive_camera = np.array(
+    [
+        [0, 0, 1, 2.5e-2],
+        [-1, 0, 0, 0],
+        [0, -1, 0, -3e-2],
+        [0, 0, 0, 1],
+    ]
+)
 
 
 def tracker_infos_to_GlobalMsg(tracker_infos: dict) -> GlobalMsg:
