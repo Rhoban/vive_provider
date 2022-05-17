@@ -47,7 +47,7 @@ while failed:
         position = vp.get_controllers_infos()[0]["position"]
 
         has_error: bool = False
-        
+
         # Checking references
         infos = vp.get_tracker_infos(raw=True)
         for reference in infos["references"]:

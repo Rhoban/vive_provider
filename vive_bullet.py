@@ -73,7 +73,7 @@ class BulletViewer:
         # Updating tracker positions
         for serial_number in infos["trackers"]:
             info = infos["trackers"][serial_number]
-            
+
             if serial_number not in self.trackers:
                 startOrientation = p.getQuaternionFromEuler([0, 0, 0])
                 startPos = [0, 0, 0]
