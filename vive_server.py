@@ -13,6 +13,7 @@ from vive_provider import *
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--broadcast", "-b", type=str, default="192.168.0.255")
+parser.add_argument("--max_freq", "-f", type=int, default=250)
 args = parser.parse_args()
 
 collection = GlobalCollection()
@@ -31,8 +32,16 @@ try:
     pb_msg: GlobalMsg = GlobalMsg()
     last_broadcast: float = time.time()
     sequence: int = 0
+    period: float = 1.0 / args.max_freq
+    last: float = 0
 
     while True:
+        # Limitting frequency
+        elapsed = time.time() - last
+        if elapsed < period:
+            time.sleep(period - elapsed)
+        last = time.time()
+
         # Collecting messages at maximum speed
         trackers = vp.get_tracker_infos()
         pb_msg.Clear()
