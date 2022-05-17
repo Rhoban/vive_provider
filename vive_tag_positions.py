@@ -16,7 +16,7 @@ viewer = BulletViewer(vp)
 
 # Checking controller presence
 controllers = vp.get_controllers_infos()
-if len(vp.get_controllers_infos()) != 1:
+if len(controllers) != 1:
     print("ERROR: Tagging positions should have exactly one controller (found %d)" % len(controllers))
     exit()
 
@@ -41,8 +41,7 @@ while True:
     elif button_state == 2:
         button_state = 0
 
-        pose = vp.get_controllers_infos(raw=False)[0]["pose"]
-        position = pose[:3]
+        position = vp.get_controllers_infos(raw=False)[0]["position"].tolist()
 
         # Showing the position in the viewer
         target = viewer.add_urdf("assets/target/robot.urdf")

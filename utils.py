@@ -99,7 +99,7 @@ def GlobalMsg_to_tracker_infos(data: str) -> dict:
 
         infos["trackers"][entry["serial_number"]] = entry
 
-    infos["tagged_positions"] = {}
+    infos["tagged_positions"] = []
     for i in range(0, len(pb_msg.tagged_positions)):
         infos["tagged_positions"].append(
             [pb_msg.tagged_positions[i].x, pb_msg.tagged_positions[i].y, pb_msg.tagged_positions[i].z]

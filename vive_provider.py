@@ -269,7 +269,7 @@ class ViveProvider:
             if self.enable_buttons:
                 if entry["device_type"] == "controller":
                     _, state = self.vr.getControllerState(openvr_index)
-                    entry["buttonPressed"] = state.ulButtonPressed != 0
+                    entry["button_pressed"] = state.ulButtonPressed != 0
 
             infos["trackers"][serial_number] = entry
 

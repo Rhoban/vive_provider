@@ -38,10 +38,10 @@ while failed:
         viewer.set_urdf_pose(target, field_position)
 
         # Waiting for button to be released
-        while vp.get_controllers_infos()[0]["buttonPressed"]:
+        while vp.get_controllers_infos()[0]["button_pressed"]:
             time.sleep(0.01)
         # Waitng for button to be pressed
-        while not vp.get_controllers_infos()[0]["buttonPressed"]:
+        while not vp.get_controllers_infos()[0]["button_pressed"]:
             time.sleep(0.01)
 
         position = vp.get_controllers_infos()[0]["position"]
