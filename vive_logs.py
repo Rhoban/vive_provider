@@ -9,6 +9,7 @@ from vive_utils import average_transforms
 
 class ViveLog:
     def __init__(self, filename: str):
+        self.filename:str = filename
         self.collection: GlobalCollection = GlobalCollection()
 
         f = open(filename, "rb")
@@ -75,7 +76,17 @@ class ViveLog:
 
         raise ValueError(f"Tracker {serial_number} not found in the given message")
 
-    def get_pose(self, serial_number: str, timestamp: float) -> np.array:
+    def contains(self, timestamp:int) -> bool:
+        """
+        Checks if the log contains a given timestamp
+
+        :param int timestamp: the timestamp
+        :return bool: True if the timestamp is in this log
+        """        
+        min, max = self.get_first_last_timestamps()
+        return min < timestamp < max
+
+    def get_pose(self, serial_number: str, timestamp: int) -> np.array:
         """
         Get the logged pose at a given time
 
@@ -83,9 +94,7 @@ class ViveLog:
         :raises ValueError: if the timestamp is not in the range of this log
         :return np.array: tracker to field pose
         """
-
-        min, max = self.get_first_last_timestamps()
-        if timestamp < min or timestamp > max:
+        if not self.contains(timestamp):
             raise ValueError(f"Timestamp {timestamp} is not in range of vive logs")
 
         # Using binary search to find before and after
