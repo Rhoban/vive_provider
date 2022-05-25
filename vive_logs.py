@@ -66,6 +66,9 @@ class ViveLog:
         """
         for tracker in message.trackers:
             if tracker.serial_number == serial_number:
+                if tracker.time_since_last_tracked != 0:
+                    return None
+
                 frame = np.eye(4)
                 frame[:3, 3] = tracker.pos.x, tracker.pos.y, tracker.pos.z
 
@@ -106,4 +109,7 @@ class ViveLog:
         frame_before = self._tracker_pose(self.sorted_dict[before], serial_number)
         frame_after = self._tracker_pose(self.sorted_dict[after], serial_number)
 
-        return average_transforms(frame_before, frame_after, alpha)
+        if frame_before is None or frame_after is None:
+            return None
+        else:
+            return average_transforms(frame_before, frame_after, alpha)
