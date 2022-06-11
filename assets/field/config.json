@@ -1,11 +1,6 @@
 {
     "documentId": "7c9b2b33f4117af700005b74",
     "outputFormat": "urdf",
-    "drawFrames": false,
-    "drawCollisions": false,
-    "useScads": true,
     "noDynamics": true,
-
-    "jointMaxEffort": 1.5,
-    "jointMaxVelocity": 22
+    "useFixedLinks": true
 }
