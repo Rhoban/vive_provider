@@ -64,9 +64,13 @@ try:
             for id in trackers["trackers"]:
                 p = trackers["trackers"][id]["position"]
                 rpy = euler.quat2euler(trackers["trackers"][id]["orientation"])
+                rpy_deg = (rpy[0] * 180 / math.pi, rpy[1] * 180 / math.pi, rpy[2] * 180 / math.pi)
                 print("- %s (%s)" % (id, trackers["trackers"][id]["device_type"]))
                 print("  - x: %g, y: %g, z: %g" % (p[0], p[1], p[2]))
+                print("  Rotation in radians :")
                 print("  - roll: %g, pitch: %f, yaw: %g" % tuple(rpy))
+                print("  Rotation in degrees :")
+                print("  - roll: %g, pitch: %f, yaw: %g" % tuple(rpy_deg))
             print()
 
             if address is not None:

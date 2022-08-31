@@ -40,6 +40,7 @@ class ViveLog:
         """
         return (self.collection.messages[0].time_since_epoch, self.collection.messages[-1].time_since_epoch)
 
+        
     def get_trackers_serial_numbers(self) -> list:
         """
         Retrieve all tracker's serial numbers mentionned in the log
@@ -113,3 +114,28 @@ class ViveLog:
             return None
         else:
             return average_transforms(frame_before, frame_after, alpha)
+
+    def get_data(self, serial_number) -> dict:
+        """Return a dictionnary of each value saved for a serial_number in a given timestamps
+
+        Args:
+            serial_number (string): serial number of a tracker
+
+        Returns:
+            dict: Dictionnary of a value in a given timestamps
+        """
+        list_of_data = []
+        for message in self.collection.messages:
+            for tracker in message.trackers:
+                if tracker.serial_number == serial_number:
+                    if tracker.time_since_last_tracked != 0:
+                        return None
+                    tracker_timestamp = message.vive_timestamp
+                    tracker_position = tracker.pos
+                    tracker_orientation = tracker.orientation
+                    tracker_velocity = tracker.cartesian_velocity
+                    data = [tracker_timestamp, tracker_position, tracker_orientation, tracker_velocity]
+                    list_of_data.append(data)
+        return list_of_data
+        
+        
