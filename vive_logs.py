@@ -129,6 +129,7 @@ class ViveLog:
             for tracker in message.trackers:
                 if tracker.serial_number == serial_number:
                     if tracker.time_since_last_tracked != 0:
+                        print("Tracker " + str(tracker.serial_number) + " have an time_since_last_tracked error at timestamps : " + str(message.vive_timestamp/1000000) + " seconds.")
                         return None
                     tracker_timestamp = message.vive_timestamp
                     tracker_position = tracker.pos

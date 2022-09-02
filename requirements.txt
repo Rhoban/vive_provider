@@ -1,5 +1,7 @@
 protobuf==3.19.0
-sortedcontainers
-openvr
-numpy
-transforms3d
+sortedcontainers~=2.4.0
+openvr~=1.23.701
+numpy~=1.23.2
+transforms3d~=0.4
+
+matplotlib~=3.5.3
