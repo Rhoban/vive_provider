@@ -9,7 +9,7 @@ from vive_utils import average_transforms
 
 class ViveLog:
     def __init__(self, filename: str):
-        self.filename:str = filename
+        self.filename: str = filename
         self.collection: GlobalCollection = GlobalCollection()
 
         f = open(filename, "rb")
@@ -22,11 +22,11 @@ class ViveLog:
 
     def get_tagged_positions(self) -> list:
         """
-        Retrieve tagged positions from t his log
+        Retrieve tagged positions from this log
 
         :return list: tagged positions
-        """        
-        positions:list = []
+        """
+        positions: list = []
         for position in self.collection.tagged_positions:
             positions.append([position.x, position.y, position.z])
 
@@ -38,12 +38,11 @@ class ViveLog:
 
         :return tuple: a tuple containing first and last timestamp
         """
-        return (self.collection.messages[0].time_since_epoch, self.collection.messages[-1].time_since_epoch)
+        return self.collection.messages[0].time_since_epoch, self.collection.messages[-1].time_since_epoch
 
-        
     def get_trackers_serial_numbers(self) -> list:
         """
-        Retrieve all tracker's serial numbers mentionned in the log
+        Retrieve all tracker's serial numbers mentioned in the log
 
         :return list: list of (str) tracker's serial number
         """
@@ -80,13 +79,13 @@ class ViveLog:
 
         raise ValueError(f"Tracker {serial_number} not found in the given message")
 
-    def contains(self, timestamp:int) -> bool:
+    def contains(self, timestamp: int) -> bool:
         """
         Checks if the log contains a given timestamp
 
         :param int timestamp: the timestamp
         :return bool: True if the timestamp is in this log
-        """        
+        """
         min, max = self.get_first_last_timestamps()
         return min < timestamp < max
 
@@ -116,20 +115,22 @@ class ViveLog:
             return average_transforms(frame_before, frame_after, alpha)
 
     def get_data(self, serial_number) -> dict:
-        """Return a dictionnary of each value saved for a serial_number in a given timestamps
+        """Return a dictionary of each value saved for a serial_number in a given timestamps
 
         Args:
             serial_number (string): serial number of a tracker
 
         Returns:
-            dict: Dictionnary of a value in a given timestamps
+            dict: Dictionary of a value in a given timestamps
         """
         list_of_data = []
         for message in self.collection.messages:
             for tracker in message.trackers:
                 if tracker.serial_number == serial_number:
                     if tracker.time_since_last_tracked != 0:
-                        print("Tracker " + str(tracker.serial_number) + " have an time_since_last_tracked error at timestamps : " + str(message.vive_timestamp/1000000) + " seconds.")
+                        print("Tracker " + str(
+                            tracker.serial_number) + " have an time_since_last_tracked error at timestamps : " + str(
+                            message.vive_timestamp / 1000000) + " seconds.")
                         return None
                     tracker_timestamp = message.vive_timestamp
                     tracker_position = tracker.pos
@@ -138,5 +139,3 @@ class ViveLog:
                     data = [tracker_timestamp, tracker_position, tracker_orientation, tracker_velocity]
                     list_of_data.append(data)
         return list_of_data
-        
-        
