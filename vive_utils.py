@@ -11,6 +11,7 @@ VIVE_SERVER_PORT: int = 44444
 
 # File name for points used for calibration
 FIELD_POINTS_FILENAME: str = "field_points.json"
+FIELD_POINTS_TRACKERS_FILENAME: str = "field_points_trackers.json"
 
 # File name to output calibration
 CALIBRATION_FILENAME: str = "calibration.json"
@@ -131,7 +132,7 @@ def tracker_to_matrix(openvr_tracker) -> np.array:
 
 def rigid_transform_3D(A: np.array, B: np.array) -> np.array:
     """
-    Finds best transformation to match point-to-point
+    Finds the best transformation to match point-to-point
     https://nghiaho.com/?page_id=671
 
     :param list A: point cloud A

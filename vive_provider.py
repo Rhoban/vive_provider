@@ -119,7 +119,7 @@ class Calibration:
 
 class ViveProvider:
     """
-    Provides informations from the Vive, can be run directly or as a client mode that listens on the network
+    Provides information from the Vive, can be run directly or as a client mode that listens on the network
     """
 
     def __init__(self, enable_buttons=False, calibration_file_path=CALIBRATION_FILENAME, client_mode=False):
@@ -156,10 +156,10 @@ class ViveProvider:
 
     def get_tracker_infos(self, raw: bool = False) -> dict:
         """
-        Get all informations in a dict
+        Get all information in a dict
 
         :param bool raw: should we not use calibration ?, defaults to False
-        :return dict: a dictionary containing detection informations
+        :return dict: a dictionary containing detection information
         """
 
         if self.client_mode:
@@ -183,7 +183,8 @@ class ViveProvider:
         infos["trackers"] = {}
 
         # Request informations
-        poses = self.vr.getDeviceToAbsoluteTrackingPose(openvr.TrackingUniverseStanding, 0, openvr.k_unMaxTrackedDeviceCount)
+        poses = self.vr.getDeviceToAbsoluteTrackingPose(openvr.TrackingUniverseStanding, 0,
+                                                        openvr.k_unMaxTrackedDeviceCount)
 
         trackers = []
 
@@ -219,7 +220,7 @@ class ViveProvider:
         if not raw:
             self.calibration.check_consistency(infos["references"])
 
-        # Tracker informations
+        # Tracker information
         for serial_number, device_type, pose, openvr_index in trackers:
 
             entry = {}
@@ -233,7 +234,7 @@ class ViveProvider:
                 # our frame where the tracker LED is along the X axis
                 T_world_tracker = T_world_tracker @ rotation_transformation(math.pi, "y")
                 T_world_tracker = T_world_tracker @ rotation_transformation(math.pi / 2, "z")
-                T_world_tracker = T_world_tracker @ translation_transformation(0, 0, -0.01)
+                # T_world_tracker = T_world_tracker @ translation_transformation(0, 0, -0.01)
 
             if not raw:
                 T_world_tracker = self.calibration.transform_frame(infos["references"], T_world_tracker)
@@ -262,7 +263,129 @@ class ViveProvider:
                     "vive_timestamp_last_tracked"
                 ]
                 entry["time_since_last_tracked"] = (
-                    infos["vive_timestamp"] - self.last_infos["trackers"][serial_number]["vive_timestamp_last_tracked"]
+                        infos["vive_timestamp"] - self.last_infos["trackers"][serial_number][
+                    "vive_timestamp_last_tracked"]
+                )
+
+            # Checking for buttons press
+            if self.enable_buttons:
+                if entry["device_type"] == "controller":
+                    _, state = self.vr.getControllerState(openvr_index)
+                    entry["button_pressed"] = state.ulButtonPressed != 0
+
+            infos["trackers"][serial_number] = entry
+
+        if self.last_infos is not None:
+            infos["trackers"] = {**self.last_infos["trackers"], **infos["trackers"]}
+
+        # Keeping last infos, if a tracker is not present, keeping the previous one
+        self.last_infos = copy.deepcopy(infos)
+
+        return infos
+
+    def get_tracker_infos_without_calibration(self, raw: bool = False) -> dict:
+        """
+        Get all information in a dict
+
+        :param bool raw: should we not use calibration ?, defaults to False
+        :return dict: a dictionary containing detection information
+        """
+
+        if self.client_mode:
+            # In client mode, receive the next packet from the network and parses it
+            pb_msg = GlobalMsg()
+            data, _ = self.client.recvfrom(1024)
+            pb_msg.ParseFromString(data)
+
+            return GlobalMsg_to_tracker_infos(data)
+
+        infos = {}
+
+        # Steady monotonic clock and system clock
+        infos["vive_timestamp"] = int(time.perf_counter() * 1000000)
+        infos["time_since_epoch"] = int(time.time() * 1000000)
+
+        # Pre-tagged positions are always included
+        infos["tagged_positions"] = self.tagged_positions
+
+        infos["references"] = {}
+        infos["trackers"] = {}
+
+        # Request informations
+        poses = self.vr.getDeviceToAbsoluteTrackingPose(openvr.TrackingUniverseStanding, 0,
+                                                        openvr.k_unMaxTrackedDeviceCount)
+
+        trackers = []
+
+        for index in range(1, openvr.k_unMaxTrackedDeviceCount):
+            if poses[index].bDeviceIsConnected:
+                pose = poses[index]
+                device_class = openvr.VRSystem().getTrackedDeviceClass(index)
+                serial_number = openvr.VRSystem().getStringTrackedDeviceProperty(index, openvr.Prop_SerialNumber_String)
+
+                if device_class == openvr.TrackedDeviceClass_TrackingReference:
+                    # Feeding the references
+                    infos["references"][serial_number] = tracker_to_matrix(pose)
+                elif device_class == openvr.TrackedDeviceClass_Controller:
+                    # Controller (joystick)
+                    trackers.append((serial_number, "controller", pose, index))
+                elif device_class == openvr.TrackedDeviceClass_GenericTracker:
+                    # Generic tracker
+                    trackers.append((serial_number, "tracker", pose, index))
+                else:
+                    print(f"Unknown class: {device_class}")
+
+        if not raw:
+            self.calibration.check_consistency(infos["references"])
+
+        # Tracker information
+        for serial_number, device_type, pose, openvr_index in trackers:
+
+            entry = {}
+            T_world_tracker = tracker_to_matrix(pose)
+
+            if device_type == "controller":
+                T_world_tracker = T_world_tracker @ translation_transformation(0, -0.025, -0.025)
+
+            if device_type == "tracker":
+                # These transformations are here to switch from the official frame to
+                # our frame where the tracker LED is along the X axis
+                T_world_tracker = T_world_tracker @ rotation_transformation(math.pi, "y")
+                T_world_tracker = T_world_tracker @ rotation_transformation(math.pi / 2, "z")
+                id = serial_number
+                if id == "LHR-42A22618" or id == "LHR-815E4573" or id == 'LHR-52015056':
+                    # subtract the size of the stud (4.2 cm) + grass (0.1 cm) -> -0.0043 m
+                    T_world_tracker = T_world_tracker @ translation_transformation(0, 0, -0.043)
+
+            if not raw:
+                T_world_tracker = self.calibration.transform_frame(infos["references"], T_world_tracker)
+
+            entry["openvr_index"] = openvr_index
+            entry["serial_number"] = serial_number
+            entry["device_type"] = device_type
+            entry["position"] = T_world_tracker[:3, 3]
+            entry["orientation"] = quaternions.mat2quat(T_world_tracker[:3, :3])
+            entry["velocity"] = [
+                pose.vVelocity[0],
+                pose.vVelocity[1],
+                pose.vVelocity[2],
+            ]
+            entry["angular_velocity"] = [
+                pose.vAngularVelocity[0],
+                pose.vAngularVelocity[1],
+                pose.vAngularVelocity[2],
+            ]
+
+            if pose.bPoseIsValid or self.last_infos is None or serial_number not in self.last_infos["trackers"]:
+                entry["vive_timestamp_last_tracked"] = infos["vive_timestamp"]
+                entry["time_since_last_tracked"] = 0
+            else:
+                entry["vive_timestamp_last_tracked"] = self.last_infos["trackers"][serial_number][
+                    "vive_timestamp_last_tracked"
+                ]
+                entry["time_since_last_tracked"] = (
+                        infos["vive_timestamp"] - self.last_infos["trackers"][serial_number][
+                    "vive_timestamp_last_tracked"]
                 )
 
             # Checking for buttons press
