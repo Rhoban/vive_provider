@@ -42,9 +42,8 @@ try:
     period: float = 1.0 / args.max_freq
     last: float = 0
 
-    is_calibrated = False
     list_field_position = []
-    list_pos_calibration = []
+    list_position_trackers = []
     list_to_calibrate = []
 
     f = open(FIELD_POINTS_TRACKERS_FILENAME, "r")
@@ -52,64 +51,73 @@ try:
     f.close()
 
     while True:
-        # Limiting frequency
         elapsed = time.time() - last
         if elapsed < period:
             time.sleep(period - elapsed)
         last = time.time()
 
-        # Collecting messages at maximum speed
-        trackers = vp.get_tracker_infos_without_calibration()
+        # Get world data from all trackers (balise and tracker robot)
+        T_world_trackers = vp.get_tracker_infos_without_calibration(raw=True, tracker_calibration_name=test_positions)
         pb_msg.Clear()
-        pb_msg = tracker_infos_to_GlobalMsg(trackers)
+        pb_msg = tracker_infos_to_GlobalMsg(T_world_trackers)
         pb_msg.seq = sequence
         sequence += 1
         collection.messages.extend([pb_msg])
 
         if len(collection.tagged_positions) == 0:
-            tagged_positions_to_message(trackers, collection)
+            tagged_positions_to_message(T_world_trackers, collection)
 
         # Only sending network messages at ~100Hz
         if time.time() - last_broadcast > 0.01:
-            tagged_positions_to_message(trackers, pb_msg)
+            tagged_positions_to_message(T_world_trackers, pb_msg)
             last_broadcast = time.time()
 
-            # Get each referential trackers position
-            print("---")
-            print("* Tracking %d devices (%d detections made)" % (len(trackers["trackers"]), len(collection.messages)))
-            for id in trackers["trackers"]:
-                p = trackers["trackers"][id]["position"]
+            references = {}
+
+            ########################## CALIBRATION ##########################
+            for id in T_world_trackers["trackers"]:
+                p = T_world_trackers["trackers"][id]["position"]
                 # each ID have a fix position set on the field, check documentation or the value below
                 if id in test_positions.keys():
-                    list_pos_calibration.append(p)
+                    # Getting field position of a tracker
+                    list_position_trackers.append(p)
+                    # Ground truth of the trackers (ie: JSON file)
                     list_field_position.append(np.asarray(test_positions[id]))
+                # List of all point to calibrate
                 list_to_calibrate.append(p)
-            # Compute the transformation of the three referential tracker and the real field
 
-            if len(list_pos_calibration) == 3:
-                # Computing worldToField matrix
-                T_field_world = rigid_transform_3D(np.array(list_pos_calibration), np.array(list_field_position))
-                is_calibrated = True
-            else:
-                raise ValueError("Not enough tracker to calibrate the field")
+            # Computing worldToField matrix
+            T_field_world = rigid_transform_3D(np.array(list_position_trackers), np.array(list_field_position))
+            # Adding field to reference to the calibration files
 
-            if is_calibrated:
-                np_list_to_calibrate = np.asarray(list_to_calibrate)
-                # on projecte le point dans le nouveau référentiel
-                projected_positions = (T_field_world @ np.vstack((np_list_to_calibrate.T, np.ones_like(np_list_to_calibrate.T[0:1])))).T
-                cpt = 0
+            ########################## SERVER ##########################
 
-                for id in trackers["trackers"]:
-                    trackers["trackers"][id]["position"] = projected_positions[cpt][0:3]
-                    cpt = cpt + 1
+            print("---")
+            print("* Tracking %d devices (%d detections made)" % (
+                len(T_world_trackers["trackers"]), len(collection.messages)))
+            T_field_tracker = None
+            # # Get each referential trackers position
+            T_field_trackers = T_world_trackers
 
-                pb_msg.Clear()
-                pb_msg = tracker_infos_to_GlobalMsg(trackers)
-                pb_msg.seq = sequence_calibrate
-                sequence_calibrate += 1
-                corrected_collection.messages.extend([pb_msg])
-            else:
-                print("ERROR, no calibration available")
+            for id in T_field_trackers["trackers"]:
+                p = T_field_trackers["trackers"][id]["position"]
+                orientation = T_field_trackers["trackers"][id]["orientation"]
+                # compute T_field_tracker for each tracker
+                T_world_tracker = np.eye(4)
+                matrix_orientation = np.asarray(quaternions.quat2mat(orientation))
+                T_world_tracker[:3, :3] = matrix_orientation[:3, :3]
+                T_world_tracker[:3, 3] = p[:3]
+                # Compute calibration
+                T_field_tracker = T_field_world @ T_world_tracker
+                # Save new position and orientation
+                T_field_trackers["trackers"][id]["position"] = T_field_tracker[:3, 3]
+                T_field_trackers["trackers"][id]["orientation"] = quaternions.mat2quat(T_field_tracker[:3, :3])
+
+            pb_msg.Clear()
+            pb_msg = tracker_infos_to_GlobalMsg(T_field_trackers)
+            pb_msg.seq = sequence_calibrate
+            sequence_calibrate += 1
+            corrected_collection.messages.extend([pb_msg])
 
             if address is not None:
                 bytes_sent = server.sendto(pb_msg.SerializeToString(), (address, VIVE_SERVER_PORT))
@@ -117,9 +125,8 @@ try:
             # Clear each data
             pb_msg.ClearField("tagged_positions")
             list_field_position.clear()
-            list_pos_calibration.clear()
+            list_position_trackers.clear()
             list_to_calibrate.clear()
-            is_calibrated = False
 
 except KeyboardInterrupt:
     # Writing logs to binary file

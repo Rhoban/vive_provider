@@ -283,7 +283,7 @@ class ViveProvider:
 
         return infos
 
-    def get_tracker_infos_without_calibration(self, raw: bool = False) -> dict:
+    def get_tracker_infos_without_calibration(self, raw: bool = False, tracker_calibration_name: dict = None) -> dict:
         """
         Get all information in a dict
 
@@ -335,8 +335,16 @@ class ViveProvider:
                 else:
                     print(f"Unknown class: {device_class}")
 
-        if not raw:
-            self.calibration.check_consistency(infos["references"])
+        # References corrected in calibrated frame
+        infos["calibration"] = {}
+        for serial_number in infos["references"]:
+            T_world_reference = self.calibration.reference_calibration(serial_number)
+
+            if T_world_reference is not None:
+                infos["calibration"][serial_number] = {
+                    "position": T_world_reference[:3, 3],
+                    "orientation": quaternions.mat2quat(T_world_reference[:3, :3]),
+                }
 
         # Tracker information
         for serial_number, device_type, pose, openvr_index in trackers:
@@ -353,7 +361,7 @@ class ViveProvider:
                 T_world_tracker = T_world_tracker @ rotation_transformation(math.pi, "y")
                 T_world_tracker = T_world_tracker @ rotation_transformation(math.pi / 2, "z")
                 id = serial_number
-                if id == "LHR-42A22618" or id == "LHR-815E4573" or id == 'LHR-52015056':
+                if id in tracker_calibration_name.keys():
                     # subtract the size of the stud (4.2 cm) + grass (0.1 cm) -> -0.0043 m
                     T_world_tracker = T_world_tracker @ translation_transformation(0, 0, -0.043)
 
@@ -417,9 +425,9 @@ class ViveProvider:
 
     def get_controllers_infos(self, raw: bool = True) -> list:
         """
-        Returns a list of controller informations (dict)
+        Returns a list of controller information (dict)
 
-        :param bool raw: should we use raw informations, defaults to True
+        :param bool raw: should we use raw information, defaults to True
         :return list: list of dict (controller-type trackers)
         """
         trackers = self.get_tracker_infos(raw)["trackers"]

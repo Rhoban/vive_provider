@@ -52,11 +52,13 @@ while failed:
         infos = vp.get_tracker_infos(raw=True)
         for reference in infos["references"]:
             matrix = infos["references"][reference]
+            # if the base station is not saved in references
             if reference in references:
                 if not np.allclose(references[reference], matrix):
                     print("! ERROR: References has moved!")
                     has_error = True
             else:
+                # We add the base station to the references list with his matrix
                 references[reference] = matrix
 
         # Checking points distances consistency

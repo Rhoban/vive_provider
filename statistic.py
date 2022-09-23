@@ -3,6 +3,7 @@ import errno
 import os
 
 import numpy as np
+from grpc._common import serialize
 from transforms3d import euler
 import matplotlib.pyplot as plt
 import math
@@ -100,7 +101,7 @@ def plot_two_trackers(data_1, data_2):
 
     ## robot subplot position
     axs[0, 0].plot(y_np, position_xyz_1[:, 0], 'r', label="position_x")
-    axs[0, 0].set_title("tracker robot")
+    axs[0, 0].set_title(serials[0])
     axs[0, 0].set_ylabel('Position (cm)')
     axs[1, 0].plot(y_np, position_xyz_1[:, 1], 'g', label="position_y")
     axs[1, 0].set_ylabel('Position (cm)')
@@ -113,7 +114,7 @@ def plot_two_trackers(data_1, data_2):
 
     ## robot subplot orientation
     axs_orientation[0, 0].plot(y_np, rotation_rpy_1[:, 0], 'r', label="rotation_roll")
-    axs_orientation[0, 0].set_title("tracker robot")
+    axs_orientation[0, 0].set_title(serials[0])
     axs_orientation[0, 0].set_ylabel('Orientation (degrees)')
     axs_orientation[1, 0].plot(y_np, rotation_rpy_1[:, 1], 'g', label="rotation_pitch")
     axs_orientation[1, 0].set_ylabel('Orientation (degrees)')
@@ -126,7 +127,7 @@ def plot_two_trackers(data_1, data_2):
 
     ## tracker subplot position
     axs[0, 1].plot(y_np, position_xyz_2[:, 0], 'r', label="position_x")
-    axs[0, 1].set_title("tracker ground")
+    axs[0, 1].set_title(serials[1])
     axs[1, 1].plot(y_np, position_xyz_2[:, 1], 'g', label="position_y")
     axs[2, 1].plot(y_np, position_xyz_2[:, 2], 'b', label="position_z")
     axs[2, 1].set_xlabel('timestamps (s)')
@@ -136,7 +137,7 @@ def plot_two_trackers(data_1, data_2):
 
     ## tracker subplot orientation
     axs_orientation[0, 1].plot(y_np, rotation_rpy_2[:, 0], 'r', label="rotation_roll")
-    axs_orientation[0, 1].set_title("tracker ground")
+    axs_orientation[0, 1].set_title(serials[1])
     axs_orientation[1, 1].plot(y_np, rotation_rpy_2[:, 1], 'g', label="rotation_pitch")
     axs_orientation[2, 1].plot(y_np, rotation_rpy_2[:, 2], 'b', label="rotation_yaw")
     axs_orientation[2, 1].set_xlabel('timestamps (s)')
@@ -243,7 +244,7 @@ def plot_three_trackers(data_1, data_2, data_3):
 
     ## robot subplot position
     axs[0, 0].plot(y_np, position_xyz_1[:, 0], 'r', label="position_x")
-    axs[0, 0].set_title("tracker 0")
+    axs[0, 0].set_title(serials[0])
     axs[0, 0].set_ylabel('Position (cm)')
     axs[1, 0].plot(y_np, position_xyz_1[:, 1], 'g', label="position_y")
     axs[1, 0].set_ylabel('Position (cm)')
@@ -256,7 +257,7 @@ def plot_three_trackers(data_1, data_2, data_3):
 
     ## robot subplot orientation
     axs_orientation[0, 0].plot(y_np, rotation_rpy_1[:, 0], 'r', label="rotation_roll")
-    axs_orientation[0, 0].set_title("tracker 0")
+    axs_orientation[0, 0].set_title(serials[0])
     axs_orientation[0, 0].set_ylabel('Orientation (degrees)')
     axs_orientation[1, 0].plot(y_np, rotation_rpy_1[:, 1], 'g', label="rotation_pitch")
     axs_orientation[1, 0].set_ylabel('Orientation (degrees)')
@@ -269,7 +270,7 @@ def plot_three_trackers(data_1, data_2, data_3):
 
     ## tracker subplot position
     axs[0, 1].plot(y_np, position_xyz_2[:, 0], 'r', label="position_x")
-    axs[0, 1].set_title("tracker 1")
+    axs[0, 1].set_title(serials[1])
     axs[1, 1].plot(y_np, position_xyz_2[:, 1], 'g', label="position_y")
     axs[2, 1].plot(y_np, position_xyz_2[:, 2], 'b', label="position_z")
     axs[2, 1].set_xlabel('timestamps (s)')
@@ -279,7 +280,7 @@ def plot_three_trackers(data_1, data_2, data_3):
 
     ## tracker subplot orientation
     axs_orientation[0, 1].plot(y_np, rotation_rpy_2[:, 0], 'r', label="rotation_roll")
-    axs_orientation[0, 1].set_title("tracker 1")
+    axs_orientation[0, 1].set_title(str(serials[1]))
     axs_orientation[1, 1].plot(y_np, rotation_rpy_2[:, 1], 'g', label="rotation_pitch")
     axs_orientation[2, 1].plot(y_np, rotation_rpy_2[:, 2], 'b', label="rotation_yaw")
     axs_orientation[2, 1].set_xlabel('timestamps (s)')
@@ -289,7 +290,7 @@ def plot_three_trackers(data_1, data_2, data_3):
 
     ## Difference subplot orientation
     axs[0, 2].plot(y_np, position_xyz_3[:, 0], 'r', label="position_x")
-    axs[0, 2].set_title("tracker 2")
+    axs[0, 2].set_title(serials[2])
     axs[1, 2].plot(y_np, position_xyz_3[:, 1], 'g', label="position_y")
     axs[2, 2].plot(y_np, position_xyz_3[:, 2], 'b', label="position_z")
     axs[2, 2].set_xlabel('timestamps (s)')
@@ -298,7 +299,7 @@ def plot_three_trackers(data_1, data_2, data_3):
         plot_axis.grid()
 
     axs_orientation[0, 2].plot(y_np, rotation_rpy_3[:, 0], 'r', label="roll")
-    axs_orientation[0, 2].set_title("tracker 2")
+    axs_orientation[0, 2].set_title(serials[2])
     axs_orientation[1, 2].plot(y_np, rotation_rpy_3[:, 1], 'g', label="pitch")
     axs_orientation[2, 2].plot(y_np, rotation_rpy_3[:, 2], 'b', label="yaw")
     axs_orientation[2, 2].set_xlabel('timestamps (s)')
@@ -325,13 +326,14 @@ def plot_n_trackers_3D(serial_numbers):
                 x_position.append([line[1].x, line[1].y, line[1].z])
             position_xyz = np.multiply(np.asarray(x_position), 100)
             ## 3D projection
-            ax_3D.scatter(position_xyz[:, 0], position_xyz[:, 1], position_xyz[:, 2])
+            ax_3D.scatter(position_xyz[:, 0], position_xyz[:, 1], position_xyz[:, 2], label=serials[i])
         else:
             print("ERROR, serial number " + serials[i] + " is None")
 
     ax_3D.set_xlabel('X')
     ax_3D.set_ylabel('Y')
     ax_3D.set_zlabel('Z')
+    ax_3D.legend()
     plt.show()
 
 
@@ -387,12 +389,10 @@ def plot_one_tracker(data):
 
     for plot_axis in axs[:, 0]:
         plot_axis.legend()
-        # plot_axis.xlabel("Timestamps")
         plot_axis.grid()
         plot_axis.label_outer()
 
     fig.tight_layout()
-    # plt.ylabel("Distance (m)")
 
     plt.show()
 
@@ -424,7 +424,8 @@ elif len(serial_numbers) == 2:
     else:
         data_tracker_1 = vive_log.get_data(serials[1])
         data_tracker_2 = vive_log.get_data(serials[0])
-elif len(serial_numbers) >= 3:
+    plot_two_trackers(data_tracker_1, data_tracker_2)
+elif len(serial_numbers) == 3:
     data_tracker_1 = vive_log.get_data(serials[0])
     data_tracker_2 = vive_log.get_data(serials[1])
     data_tracker_3 = vive_log.get_data(serials[2])
