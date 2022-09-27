@@ -19,13 +19,13 @@ In this repository python3.* must be used.
 
 You need to install the following dependencies:
 
-    pip install numpy pybullet openvr protobuf
+    pip install -r requirements.txt
 
 ## How to use SteamVR ##
 
 ### Install the beta version of SteamVR ###
 
-Is this really needed ?
+Go to Steam -> SteamVR -> Properties -> Betas. And choose beta - SteamVR Beta Update
 
 ### Remove the need of headset
 
@@ -53,7 +53,7 @@ After lunching steam, you might need to kill the process vrcompositor.
 ## Usage
 
 ### Calibration
-
+#### Old calibration version with `vive_field_calibration.py`
 First, you can edit `field_points.json` to setup your ground truth positions. Then, run
 `vive_field_calibration.py`. You need to have a paired controller then, and to go to each
 positions one by one (indicated in the 3D viewer by an arrow) to tag them.
@@ -74,6 +74,19 @@ Alternatively, you can pass a file path to `vive_field_calibration.py` with `-p 
 
 If a consistency error occurs, the joystick will vibrate and you should start the calibration
 over.
+
+#### New calibration version
+In the new calibration version, a new file `field_points_trackers.json` is created with each trackers used to calibrate the field.
+```json
+{
+  "LHR-42A22618": [-2.5, -2, 0],
+  "LHR-815E4573": [1, 0, 0],
+  "LHR-52015056": [-2.5, 2, 0],
+  ...,
+  "<trackers_id>": [xn, yn, zn]
+}
+```
+It's recommended not to place trackers on point of interest.
 
 ### Running the viewer
 

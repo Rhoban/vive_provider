@@ -2,7 +2,7 @@ import math
 from vive_pb2 import *
 import time
 import numpy as np
-from transforms3d import axangles
+from transforms3d import axangles, quaternions
 
 import numpy.linalg as linalg
 
@@ -10,7 +10,7 @@ import numpy.linalg as linalg
 VIVE_SERVER_PORT: int = 44444
 
 # File name for points used for calibration
-FIELD_POINTS_FILENAME: str = "field_points.json"
+FIELD_POINTS_FILENAME: str = "old/field_points.json"
 FIELD_POINTS_TRACKERS_FILENAME: str = "field_points_trackers.json"
 
 # File name to output calibration
@@ -237,3 +237,50 @@ def average_transforms(frameA: np.array, frameB: np.array, alpha: float = 0.5) -
     frame[:3, 3] = posA + alpha * (posB - posA)
 
     return frame
+
+
+def calib_position(calib_trackers: dict = None, trackers_info: object = None):
+    """
+    Calibrate all trackers in the field reference
+    Parameters
+    ----------
+    calib_trackers: Dict : dictionary containing all fix trackers used to calibrate field
+    trackers_info: Dict : Dictionary of all information about vive objects
+
+    Returns T_field_trackers: Dict : Calibrated trackers in the field reference
+    """
+    list_field_position = []
+    list_position_trackers = []
+
+    ########################## CALIBRATION ##########################
+    for id in trackers_info["trackers"]:
+        p = trackers_info["trackers"][id]["position"]
+        # each ID have a fix position set on the field, check documentation or the value below
+        if id in calib_trackers.keys():
+            # Getting field position of a tracker
+            list_position_trackers.append(p)
+            # Ground truth of the trackers (ie: JSON file)
+            list_field_position.append(np.asarray(calib_trackers[id]))
+    # Computing worldToField matrix
+    T_field_world = rigid_transform_3D(np.array(list_position_trackers), np.array(list_field_position))
+    # Adding field to reference to the calibration files
+
+    T_field_tracker = None
+    # # Get each referential trackers position
+    T_field_trackers = trackers_info
+
+    for id in T_field_trackers["trackers"]:
+        p = T_field_trackers["trackers"][id]["position"]
+        orientation = T_field_trackers["trackers"][id]["orientation"]
+        # compute T_field_tracker for each tracker
+        T_world_tracker = np.eye(4)
+        matrix_orientation = np.asarray(quaternions.quat2mat(orientation))
+        T_world_tracker[:3, :3] = matrix_orientation[:3, :3]
+        T_world_tracker[:3, 3] = p[:3]
+        # Compute calibration
+        T_field_tracker = T_field_world @ T_world_tracker
+        # Save new position and orientation
+        T_field_trackers["trackers"][id]["position"] = T_field_tracker[:3, 3]
+        T_field_trackers["trackers"][id]["orientation"] = quaternions.mat2quat(T_field_tracker[:3, :3])
+
+    return T_field_trackers

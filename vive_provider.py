@@ -362,8 +362,9 @@ class ViveProvider:
                 T_world_tracker = T_world_tracker @ rotation_transformation(math.pi / 2, "z")
                 id = serial_number
                 if id in tracker_calibration_name.keys():
-                    # subtract the size of the stud (4.2 cm) + grass (0.1 cm) -> -0.0043 m
-                    T_world_tracker = T_world_tracker @ translation_transformation(0, 0, -0.043)
+                    # subtract the size of the stud (4.2 cm) + grass (0.2 cm) -> -0.0044 m
+                    T_world_tracker = T_world_tracker @ translation_transformation(0, 0, -0.034)
+
 
             if not raw:
                 T_world_tracker = self.calibration.transform_frame(infos["references"], T_world_tracker)

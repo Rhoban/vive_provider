@@ -8,6 +8,10 @@ f = open(TAGGED_POSITIONS_FILENAME, "w")
 f.write(json.dumps([]))
 f.close()
 
+f = open(FIELD_POINTS_TRACKERS_FILENAME, "r")
+calib_trackers = json.load(f)
+f.close()
+
 # Create a Vive Povider
 vp = ViveProvider(enable_buttons=True)
 
@@ -15,10 +19,15 @@ vp = ViveProvider(enable_buttons=True)
 viewer = BulletViewer(vp)
 
 # Checking controller presence
-controllers = vp.get_controllers_infos()
+# controllers = vp.get_controllers_infos()
+controllers = vp.get_tracker_infos_without_calibration(raw=True, tracker_calibration_name=calib_trackers)
+
 if len(controllers) != 1:
     print("ERROR: Tagging positions should have exactly one controller (found %d)" % len(controllers))
     exit()
+
+# Calibrate all trackers
+controllers = vive_utils.calib_position(calib_trackers, controllers)
 
 # Loop to retrieve the points
 positions: list = []

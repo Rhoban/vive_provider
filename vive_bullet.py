@@ -1,10 +1,12 @@
 #!/usr/bin/env python
+import json
 import math
 import numpy as np
 import pybullet as p
 from time import sleep
 from vive_provider import ViveProvider
 from transforms3d import quaternions
+import vive_utils
 
 
 class BulletViewer:
@@ -38,7 +40,12 @@ class BulletViewer:
         p.configureDebugVisualizer(p.COV_ENABLE_RGB_BUFFER_PREVIEW, 0)
         p.configureDebugVisualizer(p.COV_ENABLE_MOUSE_PICKING, 1)
 
-    def add_urdf(self, path: str) -> int:
+        f = open(vive_utils.FIELD_POINTS_TRACKERS_FILENAME, "r")
+        self.calib_trackers = json.load(f)
+        f.close()
+
+    @staticmethod
+    def add_urdf(path: str) -> int:
         """
         Adds an URDF file to the scene
 
@@ -47,7 +54,8 @@ class BulletViewer:
         """
         return p.loadURDF(path, [0, 0, 0])
 
-    def set_urdf_pose(self, urdf: int, position: list, orientation=None) -> None:
+    @staticmethod
+    def set_urdf_pose(urdf: int, position: list, orientation=None) -> None:
         """
         Sets the pose of an object
 
@@ -64,7 +72,10 @@ class BulletViewer:
         """
         Reads tracker infos and update the 3D object positions accordingly
         """
-        infos = self.vive.get_tracker_infos()
+        # Read raw trackers info
+        infos = self.vive.get_tracker_infos_without_calibration(raw=True, tracker_calibration_name=self.calib_trackers)
+        # Calibrate tracker info
+        infos = vive_utils.calib_position(self.calib_trackers, infos)
 
         # Quaternions are represented x, y, z, w in pyBullet
         def quaternions_flip(q):
@@ -79,7 +90,7 @@ class BulletViewer:
                 self.positions[index] = self.add_urdf("assets/target/robot.urdf")
 
             self.set_urdf_pose(self.positions[index], position)
-        # XXX: What happens if a position disapear ?
+        # XXX: What happens if a position disappear ?
 
         # Updating tracker positions
         for serial_number in infos["trackers"]:

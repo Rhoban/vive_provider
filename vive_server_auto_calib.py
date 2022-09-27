@@ -7,6 +7,7 @@ from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from vive_pb2 import *
 from transforms3d import euler
+from scipy.spatial.transform import Rotation as R
 
 import argparse
 from datetime import datetime
@@ -74,44 +75,12 @@ try:
 
             references = {}
 
-            ########################## CALIBRATION ##########################
-            for id in T_world_trackers["trackers"]:
-                p = T_world_trackers["trackers"][id]["position"]
-                # each ID have a fix position set on the field, check documentation or the value below
-                if id in test_positions.keys():
-                    # Getting field position of a tracker
-                    list_position_trackers.append(p)
-                    # Ground truth of the trackers (ie: JSON file)
-                    list_field_position.append(np.asarray(test_positions[id]))
-                # List of all point to calibrate
-                list_to_calibrate.append(p)
-
-            # Computing worldToField matrix
-            T_field_world = rigid_transform_3D(np.array(list_position_trackers), np.array(list_field_position))
-            # Adding field to reference to the calibration files
-
-            ########################## SERVER ##########################
+            # Calibrate all trackers
+            T_field_trackers = vive_utils.calib_position(test_positions, T_world_trackers)
 
             print("---")
             print("* Tracking %d devices (%d detections made)" % (
                 len(T_world_trackers["trackers"]), len(collection.messages)))
-            T_field_tracker = None
-            # # Get each referential trackers position
-            T_field_trackers = T_world_trackers
-
-            for id in T_field_trackers["trackers"]:
-                p = T_field_trackers["trackers"][id]["position"]
-                orientation = T_field_trackers["trackers"][id]["orientation"]
-                # compute T_field_tracker for each tracker
-                T_world_tracker = np.eye(4)
-                matrix_orientation = np.asarray(quaternions.quat2mat(orientation))
-                T_world_tracker[:3, :3] = matrix_orientation[:3, :3]
-                T_world_tracker[:3, 3] = p[:3]
-                # Compute calibration
-                T_field_tracker = T_field_world @ T_world_tracker
-                # Save new position and orientation
-                T_field_trackers["trackers"][id]["position"] = T_field_tracker[:3, 3]
-                T_field_trackers["trackers"][id]["orientation"] = quaternions.mat2quat(T_field_tracker[:3, :3])
 
             pb_msg.Clear()
             pb_msg = tracker_infos_to_GlobalMsg(T_field_trackers)
