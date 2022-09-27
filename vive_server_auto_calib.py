@@ -58,7 +58,7 @@ try:
         last = time.time()
 
         # Get world data from all trackers (balise and tracker robot)
-        T_world_trackers = vp.get_tracker_infos_without_calibration(raw=True, tracker_calibration_name=test_positions)
+        T_world_trackers = vp.get_tracker_infos_without_calibration(tracker_calibration_name=test_positions)
         pb_msg.Clear()
         pb_msg = tracker_infos_to_GlobalMsg(T_world_trackers)
         pb_msg.seq = sequence

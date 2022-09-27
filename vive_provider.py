@@ -283,11 +283,10 @@ class ViveProvider:
 
         return infos
 
-    def get_tracker_infos_without_calibration(self, raw: bool = False, tracker_calibration_name: dict = None) -> dict:
+    def get_tracker_infos_without_calibration(self, tracker_calibration_name: dict = None) -> dict:
         """
         Get all information in a dict
 
-        :param bool raw: should we not use calibration ?, defaults to False
         :return dict: a dictionary containing detection information
         """
 
@@ -364,10 +363,6 @@ class ViveProvider:
                 if id in tracker_calibration_name.keys():
                     # subtract the size of the stud (4.2 cm) + grass (0.2 cm) -> -0.0044 m
                     T_world_tracker = T_world_tracker @ translation_transformation(0, 0, -0.034)
-
-
-            if not raw:
-                T_world_tracker = self.calibration.transform_frame(infos["references"], T_world_tracker)
 
             entry["openvr_index"] = openvr_index
             entry["serial_number"] = serial_number

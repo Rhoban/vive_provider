@@ -73,7 +73,7 @@ class BulletViewer:
         Reads tracker infos and update the 3D object positions accordingly
         """
         # Read raw trackers info
-        infos = self.vive.get_tracker_infos_without_calibration(raw=True, tracker_calibration_name=self.calib_trackers)
+        infos = self.vive.get_tracker_infos_without_calibration(tracker_calibration_name=self.calib_trackers)
         # Calibrate tracker info
         infos = vive_utils.calib_position(self.calib_trackers, infos)
 
