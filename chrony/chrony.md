@@ -10,3 +10,7 @@
 
 	DAEMON_OPTS="-F 0"
 
+- To check if everything is ok, type:
+
+	chronyc sources
+
