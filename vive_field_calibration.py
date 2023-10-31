@@ -94,6 +94,6 @@ for reference in references:
     data[reference] = T_field_reference
 
 # Writing the calibration file
-calibration = open("../calibration.json", "w")
+calibration = open("calibration.json", "w")
 calibration.write(json.dumps(data, indent=4))
 calibration.close()

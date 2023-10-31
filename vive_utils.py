@@ -10,7 +10,7 @@ import numpy.linalg as linalg
 VIVE_SERVER_PORT: int = 44444
 
 # File name for points used for calibration
-FIELD_POINTS_FILENAME: str = "old/field_points.json"
+FIELD_POINTS_FILENAME: str = "field_points.json"
 FIELD_POINTS_TRACKERS_FILENAME: str = "field_points_trackers.json"
 
 # File name to output calibration

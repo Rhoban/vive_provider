@@ -14,7 +14,7 @@ class BulletViewer:
     Handles the rendering of the 3D environment using pyBullet
     """
 
-    def __init__(self, vive: ViveProvider):
+    def __init__(self, vive: ViveProvider, trackers_calibration: bool = False):
         # Initialisation de pyBullet
         physicsClient = p.connect(p.GUI)
         p.setGravity(0, 0, -9.8)
@@ -33,16 +33,21 @@ class BulletViewer:
         self.references: dict = {}
         self.positions: dict = {}
         self.texts = {}
-
+        
+        
         p.configureDebugVisualizer(p.COV_ENABLE_GUI, 0)
         p.configureDebugVisualizer(p.COV_ENABLE_SEGMENTATION_MARK_PREVIEW, 0)
         p.configureDebugVisualizer(p.COV_ENABLE_DEPTH_BUFFER_PREVIEW, 0)
         p.configureDebugVisualizer(p.COV_ENABLE_RGB_BUFFER_PREVIEW, 0)
         p.configureDebugVisualizer(p.COV_ENABLE_MOUSE_PICKING, 1)
 
-        f = open(vive_utils.FIELD_POINTS_TRACKERS_FILENAME, "r")
-        self.calib_trackers = json.load(f)
-        f.close()
+        self.trackers_calibration = trackers_calibration
+        self.calib_trackers = {}
+        
+        if trackers_calibration:
+            f = open(vive_utils.FIELD_POINTS_TRACKERS_FILENAME, "r")
+            self.calib_trackers = json.load(f)
+            f.close()
 
     @staticmethod
     def add_urdf(path: str) -> int:
@@ -72,10 +77,12 @@ class BulletViewer:
         """
         Reads tracker infos and update the 3D object positions accordingly
         """
-        # Read raw trackers info
-        infos = self.vive.get_tracker_infos_without_calibration(tracker_calibration_name=self.calib_trackers)
         # Calibrate tracker info
-        infos = vive_utils.calib_position(self.calib_trackers, infos)
+        if self.trackers_calibration:
+            infos = self.vive.get_tracker_infos_without_calibration(tracker_calibration_name=self.calib_trackers)
+            infos = vive_utils.calib_position(self.calib_trackers, infos)
+        else:
+            infos = self.vive.get_tracker_infos()
 
         # Quaternions are represented x, y, z, w in pyBullet
         def quaternions_flip(q):
